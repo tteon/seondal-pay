@@ -58,7 +58,7 @@ import { refreshCategoryBenchmarks, listCategoryBenchmarks } from './coupangBenc
 import { isCoupangConfigured } from './coupangPartnersClient';
 import { scanSellerProducts, getSellerProduct, COUPANG_VENDOR_ID } from './coupangSellerClient';
 import { addObservation, listObservations } from './coupangObservationStore';
-import { computeMarketPie, computeEntryAnalysis } from './marketPieEngine';
+import { computeMarketPie, computeEntryAnalysis, enrichPortfolioWithMarketEntry } from './marketPieEngine';
 import { createOnboardingProfile, getProfile, buildRecommendations } from './onboardingEngine';
 import { PRICING_TABLE, DIFFICULTY_MULTIPLIERS, SUBSCRIPTIONS, SAAS_PLANS, priceFor } from './pricingEngine';
 import { buildPortfolio } from './portfolioEngine';
@@ -1345,6 +1345,27 @@ app.post('/api/portfolio', async (req: Request, res: Response) => {
       excludedCategories: Array.isArray(excludedCategories) ? excludedCategories : undefined,
     });
     return res.status(200).json(result);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Portfolio + market-entry analysis merged: per line, the incumbent pie and
+ * the margin sacrifice required to enter it.
+ */
+app.post('/api/portfolio/market-entry', async (req: Request, res: Response) => {
+  const { capitalKrw, level, categories, categoryWeights, excludedCategories } = req.body;
+  const lvl = ['beginner', 'growth', 'mature'].includes(level) ? level : 'beginner';
+  try {
+    const result = await buildPortfolio({
+      capitalKrw: Number(capitalKrw) || 3000000,
+      level: lvl,
+      categories: Array.isArray(categories) ? categories : undefined,
+      categoryWeights: categoryWeights && typeof categoryWeights === 'object' ? categoryWeights : undefined,
+      excludedCategories: Array.isArray(excludedCategories) ? excludedCategories : undefined,
+    });
+    return res.status(200).json(enrichPortfolioWithMarketEntry(result));
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }

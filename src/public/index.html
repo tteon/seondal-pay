@@ -254,6 +254,18 @@
         <div class="card-h"><h2>💰 마진 TOP 5 분포 (순마진 ₩)</h2><span class="hint">net margin after fees</span></div>
         <div class="chart-wrap" style="height:280px"><canvas id="marginPie"></canvas></div>
       </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-h">
+          <h2>🥧 마켓 파이 (월간 판매 점유율)</h2>
+          <span class="hint">OpenClaw 수집 기준</span>
+        </div>
+        <div style="padding:10px 16px 0" id="pieGroups"></div>
+        <div class="chart-wrap" style="height:260px"><canvas id="marketPie"></canvas></div>
+        <table>
+          <thead><tr><th>#</th><th>상품</th><th>판매가</th><th>월판매</th><th>점유율</th></tr></thead>
+          <tbody id="marketPieBody"></tbody>
+        </table>
+      </div>
     </div>
 
     <div class="card">
@@ -292,6 +304,9 @@
 const API = '';
 let chart = null;
 let pieChart = null;
+let marketPieChart = null;
+let currentPieGroup = '롬퍼';
+const PIE_GROUPS = ['롬퍼', '실리콘 식기', '치발기', '아기 샴푸', '아기 수건', '수유등', '요가매트', '아기 간식', '미니 선풍기', '기저귀 가방'];
 
 // Validated categorical palette (fixed order, never cycled)
 const PIE_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4'];
@@ -337,6 +352,7 @@ async function doLogin() {
     sessionStorage.setItem('seondal_user', d.user.username);
     loginView.style.display = 'none'; appView.style.display = 'block';
     loadAll(); loadPricing(); loadCategories(); setInterval(loadAll, 30000);
+    renderPieGroupChips(); selectPieGroup(currentPieGroup);
   } else { loginMsg.textContent = '로그인 실패'; }
 }
 function logout() { sessionStorage.clear(); location.reload(); }
@@ -622,6 +638,66 @@ function renderMarginPie(lb) {
   });
 }
 
+function renderMarketPie(pie) {
+  const css = v => getComputedStyle(document.body).getPropertyValue(v).trim();
+  const top = pie.top || [];
+  marketPieBody.innerHTML = top.map(e => `
+    <tr>
+      <td>${e.rank}</td>
+      <td title="${e.productName}">${e.productName.slice(0, 26)}${e.productName.length > 26 ? '…' : ''}</td>
+      <td>₩${e.priceKrw.toLocaleString()}</td>
+      <td>${e.monthlySales.toLocaleString()}건</td>
+      <td><b>${e.sharePercent}%</b></td>
+    </tr>`).join('') || '<tr><td colspan="5" style="color:var(--ink-3)">이 그룹의 수집 데이터가 아직 없습니다 — OpenClaw 수집을 기다립니다.</td></tr>';
+  if (marketPieChart) marketPieChart.destroy();
+  if (top.length === 0) return;
+  const total = top.reduce((a, e) => a + e.monthlySales, 0);
+  marketPieChart = new Chart(document.getElementById('marketPie'), {
+    type: 'doughnut',
+    data: {
+      labels: top.map(e => e.productName.slice(0, 12)),
+      datasets: [{
+        data: top.map(e => e.monthlySales),
+        backgroundColor: PIE_COLORS.slice(0, top.length),
+        borderColor: css('--surface-1'),
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '58%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            color: css('--ink-2'), boxWidth: 12, padding: 8, font: { size: 11 },
+            generateLabels: (c) => {
+              const base = Chart.overrides.doughnut.plugins.legend.labels.generateLabels(c);
+              base.forEach((l, i) => {
+                const e = top[i];
+                l.text = `${l.text} — ${e.sharePercent}% (${e.monthlySales.toLocaleString()}건)`;
+              });
+              return base;
+            }
+          }
+        },
+        tooltip: { callbacks: { label: c => ` ${Math.round(c.parsed / total * 1000) / 10}% — ${c.parsed.toLocaleString()}건/월` } }
+      }
+    }
+  });
+}
+
+function renderPieGroupChips() {
+  pieGroups.innerHTML = PIE_GROUPS.map(g =>
+    `<button class="icon-btn" style="margin:0 6px 6px 0;${g === currentPieGroup ? 'background:var(--series-1-soft);border-color:var(--series-1);color:var(--series-1)' : ''}" onclick="selectPieGroup('${g}')">${g}</button>`
+  ).join('');
+}
+async function selectPieGroup(g) {
+  currentPieGroup = g;
+  renderPieGroupChips();
+  const pie = await fetch(API + '/api/market-pie?group=' + encodeURIComponent(g)).then(r => r.json());
+  renderMarketPie(pie);
+}
+
 async function sendChat(e) {
   e.preventDefault();
   const q = chatInput.value.trim(); if (!q) return false;
@@ -666,6 +742,7 @@ function addMsg(cls, html) {
 if (sessionStorage.getItem('seondal_session')) {
   loginView.style.display = 'none'; appView.style.display = 'block';
   loadAll(); loadPricing(); loadCategories(); setInterval(loadAll, 30000);
+  renderPieGroupChips(); selectPieGroup(currentPieGroup);
 }
 </script>
 </body>

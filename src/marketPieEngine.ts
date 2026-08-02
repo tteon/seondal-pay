@@ -207,3 +207,62 @@ export function computeEntryAnalysis(
     generatedAt: new Date().toISOString(),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Portfolio integration (non-invasive enrichment wrapper)
+// ---------------------------------------------------------------------------
+
+export interface MarketEntryLine {
+  group: string;
+  entryRoiPercent: number | null;
+  entryPriceKrw: number | null;
+  sacrificeKrw: number | null;
+  verdict: 'enter' | 'shrink' | 'avoid' | 'no-data';
+  guide: string;
+}
+
+const TARGET_ROI_BY_LEVEL: Record<string, number> = { beginner: 40, growth: 30, mature: 25 };
+
+/** Compute entry analysis for one portfolio line (category → pie group). */
+export function entryForLine(category: string, title: string, landedCostKrw: number, level: string): MarketEntryLine {
+  const targetRoi = TARGET_ROI_BY_LEVEL[level] ?? 30;
+  // group: category first, fallback to first 2 title tokens
+  const group = category || (title || '').split(/\s+/).slice(0, 2).join(' ');
+  const analysis = computeEntryAnalysis(group, landedCostKrw, targetRoi);
+  const ms = analysis.minimumMarginSacrifice;
+  if (!ms) {
+    return { group, entryRoiPercent: null, entryPriceKrw: null, sacrificeKrw: null, verdict: 'no-data', guide: analysis.guide };
+  }
+  const verdict: MarketEntryLine['verdict'] =
+    ms.entryRoiPercent >= targetRoi ? 'enter' : ms.entryRoiPercent >= 10 ? 'shrink' : 'avoid';
+  return {
+    group,
+    entryRoiPercent: ms.entryRoiPercent,
+    entryPriceKrw: ms.entryPriceKrw,
+    sacrificeKrw: ms.sacrificeKrw,
+    verdict,
+    guide: analysis.guide,
+  };
+}
+
+/** Attach market-entry analysis to every line of a portfolio result. */
+export function enrichPortfolioWithMarketEntry(portfolio: any): any {
+  const level = portfolio.level || 'beginner';
+  const lines = (portfolio.lines || []).map((line: any) => ({
+    ...line,
+    marketEntry: entryForLine(line.category, line.title, line.landedCostKrw, level),
+  }));
+  const enterable = lines.filter((l: any) => l.marketEntry.verdict === 'enter' || l.marketEntry.verdict === 'shrink');
+  return {
+    ...portfolio,
+    lines,
+    marketEntrySummary: {
+      enterableLines: enterable.length,
+      totalLines: lines.length,
+      guide:
+        enterable.length === 0
+          ? '현재 관측 데이터 기준으로는 진입 가능한 라인이 없습니다 — 원가 절감 또는 다른 카테고리 검토가 필요합니다.'
+          : `${enterable.length}/${lines.length}개 라인이 현재 마켓 파이에 진입 가능합니다.`,
+    },
+  };
+}
