@@ -27,6 +27,16 @@ spec:
           enabled: false
         kubeApiServer:
           enabled: false
+        # Autopilot Warden also blocks the operator's kubelet service in
+        # kube-system; node-exporter needs host access Autopilot forbids.
+        kubelet:
+          enabled: false
+        kubeDns:
+          enabled: false
+        coreDns:
+          enabled: false
+        nodeExporter:
+          enabled: false
         prometheus:
           prometheusSpec:
             retention: 7d
