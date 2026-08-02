@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seocho-agent-brain
+  namespace: default
+  labels:
+    app: seocho-agent-brain
+    tier: ai-core
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: seocho-agent-brain
+  template:
+    metadata:
+      labels:
+        app: seocho-agent-brain
+        tier: ai-core
+    spec:
+      containers:
+      - name: seocho-agent-brain
+        image: gcr.io/seocho-project/seocho-agent-brain:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http-api
+        env:
+        - name: PORT
+          value: "8000"
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: host
+        - name: DB_NAME
+          value: "app_db"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://otel-collector.observability.svc.cluster.local:4318"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seocho-service
+  namespace: default
+  labels:
+    app: seocho-agent-brain
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http-api
+  selector:
+    app: seocho-agent-brain

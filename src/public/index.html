@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CommerceOS // Conversational Intent Platform</title>
+  
+  <!-- Modern Typography: Plus Jakarta Sans, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome 6.5 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Chart.js Data Visualization Library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* ==========================================================================
+       LUMINOUS B2B SAAS CONVERSATIONAL WORKSPACE (EXPANDED & FOCUSED)
+       ========================================================================== */
+    :root {
+      --bg-canvas: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-glass: rgba(255, 255, 255, 0.88);
+      --bg-subtle: #f1f5f9;
+      --bg-pastel-indigo: rgba(79, 70, 229, 0.06);
+      --bg-pastel-emerald: rgba(16, 185, 129, 0.08);
+      
+      --border-subtle: rgba(226, 232, 240, 0.9);
+      --border-strong: rgba(203, 213, 225, 0.8);
+      --border-indigo: rgba(79, 70, 229, 0.25);
+      --border-emerald: rgba(16, 185, 129, 0.3);
+      
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      
+      --brand-indigo: #4f46e5;
+      --brand-indigo-hover: #4338ca;
+      --brand-sky: #0ea5e9;
+      --brand-emerald: #10b981;
+      
+      --gradient-brand: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #0ea5e9 100%);
+      --gradient-emerald: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      
+      --radius-full: 9999px;
+      --radius-2xl: 24px;
+      --radius-xl: 16px;
+      --radius-lg: 12px;
+      
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
+      --shadow-glass: 0 20px 45px -15px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background-color: var(--bg-canvas);
+      background-image: 
+        radial-gradient(circle at 5% 5%, rgba(99, 102, 241, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 95% 95%, rgba(14, 165, 233, 0.06) 0%, transparent 45%);
+      color: var(--text-primary);
+      line-height: 1.6;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* Screen Switcher */
+    .view-screen {
+      display: none;
+      height: 100%;
+      width: 100%;
+    }
+    .view-screen.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==========================================================================
+       AUTH SCREEN (LIGHT GLASS)
+       ========================================================================== */
+    .auth-wrapper {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    .auth-card {
+      background: var(--bg-glass);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-2xl);
+      box-shadow: var(--shadow-glass);
+      width: 100%;
+      max-width: 420px;
+      padding: 2.75rem 2.25rem;
+      position: relative;
+    }
+
+    .auth-card::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: 20%; right: 20%;
+      height: 3px;
+      background: var(--gradient-brand);
+      border-radius: var(--radius-full);
+    }
+
+    .brand-logo-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .logo-icon-img {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-lg);
+      object-fit: cover;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.85rem 1.1rem;
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      font-size: 0.92rem;
+      color: var(--text-primary);
+      outline: none;
+      transition: all 0.2s;
+    }
+    .form-control:focus {
+      border-color: var(--brand-indigo);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.4rem;
+      border-radius: var(--radius-lg);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--brand-indigo);
+      color: white;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+    }
+    .btn-primary:hover {
+      background: var(--brand-indigo-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      margin-top: 0.75rem;
+    }
+
+    /* ==========================================================================
+       TOP NAVIGATION BAR
+       ========================================================================== */
+    .app-header {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .nav-tabs-group {
+      display: flex;
+      gap: 0.4rem;
+      background: var(--bg-subtle);
+      padding: 0.25rem;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .nav-tab-btn {
+      padding: 0.45rem 1.25rem;
+      border-radius: var(--radius-full);
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      transition: all 0.2s;
+    }
+    .nav-tab-btn.active {
+      background: #ffffff;
+      color: var(--brand-indigo);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    }
+
+    .report-badge {
+      background: rgba(79, 70, 229, 0.1);
+      color: var(--brand-indigo);
+      font-size: 0.72rem;
+      padding: 0.1rem 0.45rem;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    /* ==========================================================================
+       MAXIMIZED & FOCUSED CONVERSATIONAL WORKSPACE (NO UNNECESSARY TITLES)
+       ========================================================================== */
+    .app-workspace-expanded {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.25rem 1.5rem;
+      overflow: hidden;
+    }
+
+    /* FULL HEIGHT CHAT CONTAINER */
+    .chat-container-maximized {
+      flex: 1;
+      background: var(--bg-glass);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-2xl);
+      box-shadow: var(--shadow-glass);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-messages-area {
+      flex: 1;
+      padding: 2rem 2.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .chat-row {
+      display: flex;
+      gap: 1rem;
+      max-width: 82%;
+    }
+
+    .chat-row.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .chat-row.bot { align-self: flex-start; }
+
+    /* NANO BANANA ROBOT AVATAR ICON */
+    .nano-banana-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+      border: 2px solid #ffffff;
+      flex-shrink: 0;
+    }
+
+    .user-avatar-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--text-primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+
+    .chat-bubble-content {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 1.25rem 1.5rem;
+      font-size: 0.98rem;
+      line-height: 1.6;
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .chat-row.user .chat-bubble-content {
+      background: var(--brand-indigo);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 4px 18px rgba(79, 70, 229, 0.25);
+    }
+
+    .intent-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--bg-pastel-indigo);
+      border: 1px solid var(--border-indigo);
+      color: var(--brand-indigo);
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.35rem 0.95rem;
+      border-radius: var(--radius-full);
+      margin-top: 0.95rem;
+    }
+
+    .btn-report-cta {
+      margin-top: 1.25rem;
+      background: var(--gradient-emerald);
+      color: white;
+      border: none;
+      padding: 0.9rem 1.75rem;
+      border-radius: var(--radius-lg);
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s;
+    }
+    .btn-report-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(16, 185, 129, 0.5);
+    }
+
+    /* EXPANDED INPUT BAR */
+    .input-bar-container {
+      padding: 1.25rem 2rem;
+      background: rgba(255, 255, 255, 0.95);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .input-row-flex {
+      display: flex;
+      gap: 0.85rem;
+      align-items: center;
+    }
+
+    .input-row-flex input {
+      flex: 1;
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 1.05rem 1.4rem;
+      color: var(--text-primary);
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .input-row-flex input:focus {
+      background: #ffffff;
+      border-color: var(--brand-indigo);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    .intent-preset-chips {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .chip-item {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      padding: 0.35rem 0.95rem;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s;
+    }
+    .chip-item:hover {
+      background: var(--bg-pastel-indigo);
+      border-color: var(--brand-indigo);
+      color: var(--brand-indigo);
+    }
+
+    /* ==========================================================================
+       SOURCING INTELLIGENCE REPORT VIEW (SCREEN 2)
+       ========================================================================== */
+    .report-scroll-wrapper {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 0;
+    }
+
+    .report-card-container {
+      background: var(--bg-glass);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-2xl);
+      padding: 2.5rem;
+      box-shadow: var(--shadow-glass);
+    }
+
+    .metrics-summary-grid {
+      background: var(--bg-pastel-indigo);
+      border: 1px solid var(--border-indigo);
+      border-radius: var(--radius-xl);
+      padding: 1.75rem;
+      margin-bottom: 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .metric-card .metric-lbl {
+      font-size: 0.73rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .metric-card .metric-val {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-top: 0.2rem;
+    }
+
+    .data-table-wrapper {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .data-row {
+      padding: 1.35rem 1.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+      display: grid;
+      grid-template-columns: 2.4fr 1fr 1fr 1fr;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .procure-callout-card {
+      background: var(--bg-pastel-emerald);
+      border: 1px solid var(--border-emerald);
+      border-radius: var(--radius-xl);
+      padding: 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .btn-procure-now {
+      background: var(--gradient-emerald);
+      color: white;
+      border: none;
+      padding: 0.95rem 2.2rem;
+      border-radius: var(--radius-lg);
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- VIEW 1: AUTHENTICATION / ACCESS GATE -->
+  <div class="view-screen active" id="screen-auth">
+    <div class="auth-wrapper">
+      <div class="auth-card">
+        <div class="brand-logo-box">
+          <img src="/assets/nano_banana.png" class="logo-icon-img" alt="Nano Banana AI">
+          <div style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; color: var(--text-primary);">CommerceOS</div>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 1.75rem;">
+          <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">Nano Banana Intent Engine</h2>
+          <p style="font-size: 0.88rem; color: var(--text-secondary);">
+            Communicate buying intentions & generate 1688 procurement reports
+          </p>
+        </div>
+
+        <form onsubmit="handleAuthLogin(event)">
+          <div style="margin-bottom: 1.25rem;">
+            <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Seller Email</label>
+            <input type="text" class="form-control" id="input-auth-user" value="admin" required style="margin-top: 0.4rem;">
+          </div>
+
+          <div style="margin-bottom: 1.25rem;">
+            <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Access Key</label>
+            <input type="password" class="form-control" id="input-auth-pass" value="admin" required style="margin-top: 0.4rem;">
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-right-to-bracket"></i> Authenticate Session
+          </button>
+        </form>
+
+        <button class="btn btn-secondary" onclick="handleDemoAccess()">
+          <i class="fa-solid fa-bolt" style="color: #f59e0b;"></i> Quick Demo Access (admin / admin)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 2: MAIN DASHBOARD & EXPANDED INTENT WORKSPACE -->
+  <div class="view-screen" id="screen-app">
+    
+    <!-- TOP NAVIGATION NAVBAR -->
+    <header class="app-header">
+      <div style="display: flex; align-items: center; gap: 0.85rem;">
+        <img src="/assets/seondal_mascot.jpg" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--brand-indigo);" alt="SEONDAL AI">
+        <div>
+          <div style="font-weight: 800; font-size: 1.25rem; letter-spacing: -0.03em; color: var(--text-primary);">SEONDAL <span style="font-size: 0.85rem; color: var(--brand-indigo); font-weight: 700;">// Intelligence</span></div>
+          <div style="font-size: 0.72rem; color: var(--brand-indigo); font-weight: 700;">이커머스 정보 비대칭성 최소화 에이전트 도우미</div>
+        </div>
+      </div>
+
+      <!-- MAIN NAVIGATION TABS -->
+      <nav class="nav-tabs-group">
+        <button class="nav-tab-btn active" id="tab-nav-report" onclick="switchView('report')">
+          <i class="fa-solid fa-layer-group"></i> 1. Saved Sourcing Reports List <span class="report-badge" id="report-count-badge">1</span>
+        </button>
+        <button class="nav-tab-btn" id="tab-nav-chat" onclick="switchView('chat')">
+          <i class="fa-solid fa-comments"></i> 2. Conversational Intent AI Hub
+        </button>
+      </nav>
+
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="font-size: 0.8rem; color: #047857; font-weight: 700;" class="mono">● SEONDAL Intent AI Active</div>
+        <button class="btn btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; width: auto;" onclick="handleSignOut()">
+          <i class="fa-solid fa-power-off"></i> Exit
+        </button>
+      </div>
+    </header>
+
+    <main class="app-workspace-expanded">
+
+      <!-- SCREEN 2B: CONVERSATIONAL CHAT HUB -->
+      <div id="view-chat-hub" style="display: none; height: 100%; flex-direction: column;">
+        <div class="chat-container-maximized">
+          
+          <div class="chat-messages-area" id="chat-stream-body">
+            <div class="chat-row bot">
+              <img src="/assets/seondal_mascot.jpg" class="nano-banana-avatar" style="border-radius: 50%; object-fit: cover;" alt="SEONDAL AI">
+              <div class="chat-bubble-content">
+                안녕하세요! <b>SEONDAL (선달) 이커머스 정보 비대칭성 최소화 에이전트</b>입니다. 원하시는 수입 상품이나 사입 예산을 말씀해 주시면, 1688 공장 검증 및 수익성 분석 리포트를 즉시 생성해 드립니다.
+              </div>
+            </div>
+          </div>
+
+          <div class="input-bar-container">
+            <div class="intent-preset-chips">
+              <span class="chip-item" onclick="applyPresetIntent(this.innerText)">Source $3,000 of Organic Infant Rompers from 1688</span>
+              <span class="chip-item" onclick="applyPresetIntent(this.innerText)">Find waterproof diaper backpacks with low MOQ</span>
+              <span class="chip-item" onclick="applyPresetIntent(this.innerText)">Analyze 1688 wholesale landed costs & tariffs</span>
+            </div>
+
+            <div class="input-row-flex">
+              <input type="text" id="user-intent-input" placeholder="Describe your buying intent (e.g. $3,000 budget for 2025 Summer Organic Infant Rompers)..." onkeydown="if(event.key==='Enter') sendUserMessage()">
+              <button class="btn btn-primary" style="width: auto; padding: 0.95rem 1.6rem;" onclick="sendUserMessage()">
+                <i class="fa-solid fa-paper-plane"></i> Send Intent
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SCREEN 2A: SAVED SOURCING REPORTS LIST VIEW (TAB 1 LANDING) -->
+      <div id="view-report-hub" style="display: block; height: 100%;">
+        <div class="report-scroll-wrapper">
+          <div class="report-card-container">
+            
+            <!-- TAB 1 SUB-HEADER & MODE TOGGLE -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.25rem; margin-bottom: 1.5rem;">
+              <div>
+                <span style="font-size: 0.78rem; color: var(--brand-indigo); font-weight: 700;" class="mono">SAVED SOURCING INTELLIGENCE REPORTS</span>
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-top: 0.2rem;" id="reports-list-heading">📁 Saved Sourcing Intelligence Reports List</h2>
+              </div>
+              <div style="display: flex; gap: 0.75rem;">
+                <button class="btn btn-secondary" style="width: auto; padding: 0.5rem 1rem;" id="btn-toggle-list-view" onclick="toggleReportSubView('list')" style="display: none;">
+                  <i class="fa-solid fa-list"></i> View Reports List
+                </button>
+                <button class="btn btn-primary" style="width: auto; padding: 0.5rem 1rem;" onclick="switchView('chat')">
+                  <i class="fa-solid fa-plus"></i> Create New Sourcing Report (via Intent AI)
+                </button>
+              </div>
+            </div>
+
+            <!-- REPORTS LIST VIEW CONTAINER (목록 보기) -->
+            <div id="reports-list-container" style="display: block; margin-bottom: 2rem;">
+              <div id="saved-reports-cards-wrapper" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <!-- DYNAMIC REPORT CARDS RENDERED HERE -->
+              </div>
+            </div>
+
+            <!-- REPORT DETAILS & CHARTS VIEW CONTAINER (상세 보고서 보기) -->
+            <div id="report-detail-container" style="display: none;">
+
+            <!-- INTENT ANALYSIS SUMMARY -->
+            <div class="metrics-summary-grid">
+              <div class="metric-card">
+                <div class="metric-lbl">Target Buying Budget</div>
+                <div class="metric-val">$3,000 USD</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-lbl">Estimated Wholesale Unit</div>
+                <div class="metric-val">$12.50 (17,500 KRW)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-lbl">Target Retail Price</div>
+                <div class="metric-val">$25.00 (35,000 KRW)</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-lbl">Projected Net ROI Margin</div>
+                <div class="metric-val" style="color: #047857;">+52.4% Margin</div>
+              </div>
+            </div>
+
+            <!-- VISUAL ANALYTICS CHARTS GRID (INSTANT VISUAL UX) -->
+            <div style="margin-bottom: 2rem;">
+              <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-chart-pie" style="color: var(--brand-indigo);"></i> 📊 Visual Analytics & Tacit Quality Radar (Intuitive At-A-Glance)
+              </h3>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+                <!-- Chart 1: 5-Axis Tacit Quality Radar Chart -->
+                <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: 1.25rem; box-shadow: var(--shadow-sm);">
+                  <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem; display: flex; justify-content: space-between;">
+                    <span>🌟 Kimi 3.0 5-Axis Tacit Quality Radar</span>
+                    <span style="color: #047857; font-weight: 800;">Grade A (88/100)</span>
+                  </div>
+                  <div style="height: 220px; position: relative;">
+                    <canvas id="chart-tacit-radar"></canvas>
+                  </div>
+                </div>
+
+                <!-- Chart 2: Landed Cost vs Retail Profit Margin Bar Chart -->
+                <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: 1.25rem; box-shadow: var(--shadow-sm);">
+                  <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem; display: flex; justify-content: space-between;">
+                    <span>🧮 Landed Cost vs Net Profit Margin</span>
+                    <span style="color: #4f46e5; font-weight: 800;">+52.4% Margin</span>
+                  </div>
+                  <div style="height: 220px; position: relative;">
+                    <canvas id="chart-cost-bar"></canvas>
+                  </div>
+                </div>
+
+                <!-- Chart 3: Seed Capital Allocation Doughnut Chart -->
+                <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: 1.25rem; box-shadow: var(--shadow-sm);">
+                  <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem; display: flex; justify-content: space-between;">
+                    <span>💰 Seed Capital Allocation (₩3M Budget)</span>
+                    <span style="color: #059669; font-weight: 800;">₩431,500 Test Order</span>
+                  </div>
+                  <div style="height: 220px; position: relative;">
+                    <canvas id="chart-capital-doughnut"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUPPLIER DATA TABLE -->
+            <div class="data-table-wrapper">
+              <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); font-weight: 700; background: var(--bg-canvas);">
+                <span><i class="fa-solid fa-warehouse" style="color: var(--brand-indigo); margin-right: 6px;"></i> Recommended 1688 Verified Supplier Intelligence</span>
+              </div>
+
+              <div class="data-row" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; background: var(--bg-canvas);">
+                <div>ITEM / SUPPLIER SPECIFICATION</div>
+                <div>WHOLESALE COST</div>
+                <div>TARGET RETAIL</div>
+                <div>AI FEASIBILITY</div>
+              </div>
+
+              <div class="data-row">
+                <div>
+                  <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem;">2025 Summer Organic Newborn Cotton Splicing Romper</div>
+                  <div style="font-size: 0.8rem; color: var(--text-secondary);">Supplier: Foshan Kids Garment Co., Ltd. (1688 Direct Factory)</div>
+                </div>
+                <div>
+                  <div style="font-weight: 800; font-size: 1rem;">$12.50</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">MOQ: 10 Units</div>
+                </div>
+                <div>
+                  <div style="font-weight: 800; font-size: 1rem; color: #047857;">$25.00</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">ROI +52.4%</div>
+                </div>
+                <div>
+                  <span style="background: rgba(16, 185, 129, 0.12); border: 1px solid var(--border-emerald); color: #047857; padding: 0.25rem 0.65rem; border-radius: 20px; font-weight: 700; font-size: 0.78rem;">High Viability</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- SELLER ESSENTIAL PANEL 1: KC SAFETY & CUSTOMS COMPLIANCE CHECKLIST -->
+            <div style="margin-top: 2rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+              <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-shield-halved" style="color: #047857;"></i> 🛡️ KC Safety & Customs Compliance Checklist (통관 및 법적 규제 검증)
+              </h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; font-size: 0.88rem;">
+                <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid var(--border-emerald); padding: 1rem; border-radius: 10px;">
+                  <div style="font-weight: 700; color: #047857; margin-bottom: 0.3rem;">✅ KC 어린이제품 안전인증</div>
+                  <div style="color: var(--text-secondary);">36개월 이하 유아용 의류: 제조 공장 무독성 오가닉 성적서 구비 완료 (공급자적합성 확인 대상)</div>
+                </div>
+                <div style="background: rgba(79, 70, 229, 0.06); border: 1px solid var(--border-indigo); padding: 1rem; border-radius: 10px;">
+                  <div style="font-weight: 700; color: #4f46e5; margin-bottom: 0.3rem;">🏷️ 원산지 표기 (Origin Label)</div>
+                  <div style="color: var(--text-secondary);">의류 안감 봉제 라벨에 'MADE IN CHINA' 선명하게 표기 필수 (세관 통관 보류 완벽 예방)</div>
+                </div>
+                <div style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.3); padding: 1rem; border-radius: 10px;">
+                  <div style="font-weight: 700; color: #d97706; margin-bottom: 0.3rem;">🛃 RCEP 관세 0% 적용</div>
+                  <div style="color: var(--text-secondary);">원산지 증명서(Form E) 첨부 시 관세 13% -> 0% 감면 혜택 확정 (수입 원가 절감)</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SELLER ESSENTIAL PANEL 2: NAVER SMARTSTORE & COUPANG SEO KEYWORD PACK -->
+            <div style="margin-top: 1.5rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+              <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-tags" style="color: var(--brand-indigo);"></i> 🏷️ Naver Smartstore & Coupang SEO High-Conversion Keyword Pack
+              </h4>
+              <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                <strong>추천 상품명 (Optimized Title):</strong> <code style="background: var(--bg-subtle); padding: 0.25rem 0.5rem; border-radius: 4px; color: var(--brand-indigo); font-weight: 700;">[오가닉 100%] 2025 여름 신생아 순면 바디수트 롬퍼</code>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                <span style="background: var(--bg-pastel-indigo); color: var(--brand-indigo); font-weight: 700; padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">#유아복 롬퍼</span>
+                <span style="background: var(--bg-pastel-indigo); color: var(--brand-indigo); font-weight: 700; padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">#신생아 바디수트</span>
+                <span style="background: var(--bg-pastel-indigo); color: var(--brand-indigo); font-weight: 700; padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">#오가닉 아동복</span>
+                <span style="background: var(--bg-pastel-indigo); color: var(--brand-indigo); font-weight: 700; padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">#출산선물 롬퍼</span>
+                <span style="background: var(--bg-pastel-indigo); color: var(--brand-indigo); font-weight: 700; padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">#여름 유아바디수트</span>
+              </div>
+            </div>
+
+            <!-- SELLER ESSENTIAL PANEL 3: 4-STEP RISK-FREE ACTION ROADMAP -->
+            <div style="margin-top: 1.5rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+              <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-list-check" style="color: #059669;"></i> 📋 4-Step Risk-Free Sourcing Execution Roadmap (실전 4단계 가이드)
+              </h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; font-size: 0.85rem;">
+                <div style="background: var(--bg-canvas); padding: 1rem; border-radius: 8px; border-left: 3px solid #6366f1;">
+                  <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">1단계: 소량 샘플 발주</div>
+                  <div style="color: var(--text-secondary);">MOQ 10개 소량 항공 특송(3~5일)으로 악성 재고 위험 제로화</div>
+                </div>
+                <div style="background: var(--bg-canvas); padding: 1rem; border-radius: 8px; border-left: 3px solid #8b5cf6;">
+                  <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">2단계: 실물 검수 & KC 확인</div>
+                  <div style="color: var(--text-secondary);">원단 감촉, 단추 마감, 무독성 오가닉 성적서 최종 확인</div>
+                </div>
+                <div style="background: var(--bg-canvas); padding: 1rem; border-radius: 8px; border-left: 3px solid #10b981;">
+                  <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">3단계: 상품 등록 & 썸네일</div>
+                  <div style="color: var(--text-secondary);">네이버/쿠팡 상위노출 키워드 팩 적용 및 썸네일 등록</div>
+                </div>
+                <div style="background: var(--bg-canvas); padding: 1rem; border-radius: 8px; border-left: 3px solid #06b6d4;">
+                  <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">4단계: LCL 해상 대량 전환</div>
+                  <div style="color: var(--text-secondary);">주문량 증가 시 LCL 해상 운송 전환으로 물류비 50% 절감</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- DIRECT PROCUREMENT ACTION -->
+            <div class="procure-callout-card" style="margin-top: 1.5rem;">
+              <div>
+                <h4 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 0.3rem;">Ready to procure directly from the supplier?</h4>
+                <p style="font-size: 0.88rem; color: var(--text-secondary);">
+                  Based on your synthesized intent report, proceed directly to source from the verified 1688 manufacturer with all Landed Cost & Customs documentation attached.
+                </p>
+              </div>
+              <button class="btn-procure-now" onclick="executeDirectProcurement()">
+                <i class="fa-solid fa-cart-shopping"></i> Directly Procure From 1688 Supplier
+              </button>
+            </div>
+
+            </div> <!-- END REPORT DETAIL CONTAINER -->
+
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- APPLICATION LOGIC JAVASCRIPT -->
+  <script>
+    let activeUser = null;
+    let reportGenerated = false;
+
+    // Auth Login
+    function handleAuthLogin(e) {
+      if (e) e.preventDefault();
+      document.getElementById('screen-auth').classList.remove('active');
+      document.getElementById('screen-app').classList.add('active');
+    }
+
+    function handleDemoAccess() {
+      handleAuthLogin();
+    }
+
+    function handleSignOut() {
+      document.getElementById('screen-app').classList.remove('active');
+      document.getElementById('screen-auth').classList.add('active');
+    }
+
+    // Navigation Switcher
+    function switchView(viewName) {
+      document.getElementById('tab-nav-chat').classList.remove('active');
+      document.getElementById('tab-nav-report').classList.remove('active');
+
+      if (viewName === 'chat') {
+        document.getElementById('tab-nav-chat').classList.add('active');
+        document.getElementById('view-chat-hub').style.display = 'flex';
+        document.getElementById('view-report-hub').style.display = 'none';
+      } else {
+        document.getElementById('tab-nav-report').classList.add('active');
+        document.getElementById('view-chat-hub').style.display = 'none';
+        document.getElementById('view-report-hub').style.display = 'block';
+      }
+    }
+
+    // SAVED REPORTS LIST STATE
+    let savedReportsList = [
+      {
+        id: "REP-88201",
+        title: "2025 Summer Organic Infant Romper Cross-Border Procurement",
+        tags: ["#유아복롬퍼", "#1688직송", "#KC인증완료", "#순마진+52.4%", "#GradeS"],
+        date: "2026-07-26",
+        budgetUsd: 3000,
+        wholesaleUsd: 12.50,
+        retailUsd: 25.00,
+        netMargin: "+52.4%",
+        moq: 10,
+        direct1688Url: "https://detail.1688.com/offer/788201092.html"
+      }
+    ];
+
+    function toggleReportSubView(mode) {
+      const listContainer = document.getElementById('reports-list-container');
+      const detailContainer = document.getElementById('report-detail-container');
+      const toggleBtn = document.getElementById('btn-toggle-list-view');
+      const listHeading = document.getElementById('reports-list-heading');
+
+      if (mode === 'list') {
+        listContainer.style.display = 'block';
+        detailContainer.style.display = 'none';
+        if (toggleBtn) toggleBtn.style.display = 'none';
+        if (listHeading) listHeading.innerText = '📁 Saved Sourcing Intelligence Reports List';
+      } else {
+        listContainer.style.display = 'none';
+        detailContainer.style.display = 'block';
+        if (toggleBtn) toggleBtn.style.display = 'inline-flex';
+        if (listHeading) listHeading.innerText = '📊 Detailed Sourcing Intelligence Report & Analytics';
+        setTimeout(renderVisualCharts, 100);
+      }
+    }
+
+    function renderSavedReportsList() {
+      const wrapper = document.getElementById('saved-reports-cards-wrapper');
+      if (!wrapper) return;
+
+      document.getElementById('report-count-badge').innerText = savedReportsList.length;
+
+      wrapper.innerHTML = savedReportsList.map(rep => `
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: 1.5rem; box-shadow: var(--shadow-sm); transition: all 0.2s;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+            <div>
+              <span style="font-size: 0.75rem; color: var(--brand-indigo); font-weight: 700;" class="mono">REPORT ID: ${rep.id} • CREATED: ${rep.date}</span>
+              <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin-top: 0.2rem;">${rep.title}</h3>
+            </div>
+            <span style="background: rgba(16, 185, 129, 0.12); color: #047857; font-weight: 800; padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">
+              ${rep.netMargin} Net Profit Margin
+            </span>
+          </div>
+
+          <!-- HASHTAG BADGES -->
+          <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem;">
+            ${rep.tags.map(t => `<span style="background: var(--bg-pastel-indigo); color: var(--brand-indigo); font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem;">${t}</span>`).join('')}
+          </div>
+
+          <!-- METADATA SNAPSHOT BAR -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; background: var(--bg-canvas); padding: 0.85rem; border-radius: 10px; font-size: 0.82rem; margin-bottom: 1.25rem;">
+            <div><span style="color: var(--text-muted);">Budget:</span> <strong>$${rep.budgetUsd.toLocaleString()} USD</strong></div>
+            <div><span style="color: var(--text-muted);">1688 Wholesale:</span> <strong>$${rep.wholesaleUsd.toFixed(2)}</strong></div>
+            <div><span style="color: var(--text-muted);">Target Retail:</span> <strong>$${rep.retailUsd.toFixed(2)}</strong></div>
+            <div><span style="color: var(--text-muted);">Recommended MOQ:</span> <strong>${rep.moq} units</strong></div>
+          </div>
+
+          <!-- ACTION BUTTONS -->
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button class="btn btn-primary" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.85rem;" onclick="toggleReportSubView('detail')">
+              <i class="fa-solid fa-chart-pie"></i> View Detailed Report & Charts
+            </button>
+            <a href="${rep.direct1688Url}" target="_blank" class="btn btn-secondary" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-arrow-up-right-from-square" style="color: #f59e0b;"></i> Open 1688 Direct Sourcing Page
+            </a>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Conversational Intent Chat Logic
+    async function sendUserMessage() {
+      const input = document.getElementById('user-intent-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const body = document.getElementById('chat-stream-body');
+
+      // 1. Append User Message
+      body.innerHTML += `
+        <div class="chat-row user">
+          <div class="user-avatar-circle"><i class="fa-solid fa-user"></i></div>
+          <div class="chat-bubble-content">${text}</div>
+        </div>
+      `;
+      input.value = '';
+      body.scrollTop = body.scrollHeight;
+
+      // 2. Append Nano Banana Agent Response with Save to List CTA
+      setTimeout(() => {
+        body.innerHTML += `
+          <div class="chat-row bot">
+            <img src="/assets/seondal_mascot.jpg" class="nano-banana-avatar" style="border-radius: 50%; object-fit: cover;" alt="SEONDAL AI">
+            <div class="chat-bubble-content">
+              <div>I have parsed your buying intent: <b>"${text}"</b>.</div>
+              <div style="margin-top: 0.5rem; color: var(--text-secondary);">
+                Evaluated 1688 manufacturer directories, KC safety regulations, and landed profit margins.
+              </div>
+              
+              <div class="intent-badge-pill">
+                <i class="fa-solid fa-bullseye"></i> Intent Saved Candidate: ${text}
+              </div>
+
+              <div style="margin-top: 0.85rem;">
+                <button class="btn-report-cta" onclick="saveChatIntentToReportList('${text.replace(/'/g, "\\'")}')">
+                  <i class="fa-solid fa-bookmark"></i> 💾 Save to Reports List (1번 리포트 목록에 추가)
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        body.scrollTop = body.scrollHeight;
+      }, 500);
+    }
+
+    function saveChatIntentToReportList(userQueryText) {
+      const newId = `REP-${Math.floor(10000 + Math.random() * 90000)}`;
+      const newReport = {
+        id: newId,
+        title: `Custom Sourcing Report: ${userQueryText}`,
+        tags: ["#신규사입분석", "#1688직송", "#KC인증검토", "#순마진+48.5%", "#GradeA"],
+        date: new Date().toISOString().split('T')[0],
+        budgetUsd: 3000,
+        wholesaleUsd: 14.20,
+        retailUsd: 29.90,
+        netMargin: "+52.5%",
+        moq: 15,
+        direct1688Url: "https://detail.1688.com/offer/788201092.html"
+      };
+
+      savedReportsList.unshift(newReport);
+      renderSavedReportsList();
+      switchView('report');
+      toggleReportSubView('list');
+    }
+
+    function applyPresetIntent(text) {
+      document.getElementById('user-intent-input').value = text;
+      sendUserMessage();
+    }
+
+    function generateSourcingReport() {
+      reportGenerated = true;
+      document.getElementById('report-count-badge').innerText = '1';
+      switchView('report');
+      setTimeout(renderVisualCharts, 100);
+    }
+
+    function renderVisualCharts() {
+      // 1. Radar Chart (5-Axis Tacit Quality)
+      const radarCtx = document.getElementById('chart-tacit-radar');
+      if (radarCtx && !window.radarChartInstance) {
+        window.radarChartInstance = new Chart(radarCtx, {
+          type: 'radar',
+          data: {
+            labels: ['Visual Appeal', 'Margin Density', 'Low Return Risk', 'Trend Velocity', 'Supplier Trust'],
+            datasets: [{
+              label: 'Tacit Quality Score',
+              data: [90, 80, 95, 85, 98],
+              backgroundColor: 'rgba(79, 70, 229, 0.2)',
+              borderColor: '#4f46e5',
+              pointBackgroundColor: '#4f46e5',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { r: { min: 0, max: 100, ticks: { display: false } } },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+
+      // 2. Bar Chart (Landed Cost vs Net Profit Margin)
+      const barCtx = document.getElementById('chart-cost-bar');
+      if (barCtx && !window.barChartInstance) {
+        window.barChartInstance = new Chart(barCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Wholesale 1688', 'Duty & Freight', 'Net Profit Margin', 'Target Retail'],
+            datasets: [{
+              label: 'Price Breakdown (KRW)',
+              data: [17500, 7150, 27050, 51700],
+              backgroundColor: ['#6366f1', '#8b5cf6', '#10b981', '#4f46e5'],
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+
+      // 3. Doughnut Chart (Seed Capital Allocation)
+      const doughnutCtx = document.getElementById('chart-capital-doughnut');
+      if (doughnutCtx && !window.doughnutChartInstance) {
+        window.doughnutChartInstance = new Chart(doughnutCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Organic Romper 10u', 'Silicone Tableware 15u', 'Reserve Buffer'],
+            datasets: [{
+              data: [246500, 185000, 2568500],
+              backgroundColor: ['#4f46e5', '#06b6d4', '#e2e8f0']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+          }
+        });
+      }
+    }
+
+    // LocalStorage Session Personalization Profile Management
+    function saveUserPersonalizationLocalProfile(profile) {
+      try {
+        localStorage.setItem('SEOCHO_USER_PERSONALIZATION', JSON.stringify(profile));
+        console.log('Saved personalization profile to localStorage:', profile);
+      } catch (e) {
+        console.error('Failed to save to localStorage:', e);
+      }
+    }
+
+    function loadUserPersonalizationLocalProfile() {
+      try {
+        const saved = localStorage.getItem('SEOCHO_USER_PERSONALIZATION');
+        if (saved) {
+          const profile = JSON.parse(saved);
+          console.log('Loaded personalization profile from localStorage:', profile);
+          return profile;
+        }
+      } catch (e) {
+        console.error('Failed to load from localStorage:', e);
+      }
+      return {
+        capitalBudgetKrw: 3000000,
+        riskProfile: 'CONSERVATIVE_ZERO_RISK',
+        preferredCategory: 'BABYWEAR',
+        lastSearchKeyword: '유아복 롬퍼'
+      };
+    }
+
+    // Auto-load on startup
+    window.addEventListener('DOMContentLoaded', () => {
+      const p = loadUserPersonalizationLocalProfile();
+      console.log('Instant LocalStorage Profile Active:', p);
+      renderSavedReportsList();
+      setTimeout(renderVisualCharts, 200);
+    });
+
+    function executeDirectProcurement() {
+      alert("🚀 Direct Procurement Request Sent to 1688 Supplier!\nOrder Ref: ORD-1688-9920\nSupplier: Foshan Kids Garment Co., Ltd.\nStatus: Awaiting Supplier Confirmation.");
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# Credentials & Secrets
+gcp-key.json
+client-keypair.json
+merchant-keypair.json
+.env
+
+# Dependencies
+node_modules/
+
+# Compiled files
+dist/
+
+# Local Mock Database & Storage
+local_gcp_mock/
+
+# System files
+.DS_Store
+*.log
