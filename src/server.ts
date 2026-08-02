@@ -58,6 +58,7 @@ import { refreshCategoryBenchmarks, listCategoryBenchmarks } from './coupangBenc
 import { isCoupangConfigured } from './coupangPartnersClient';
 import { scanSellerProducts, getSellerProduct, COUPANG_VENDOR_ID } from './coupangSellerClient';
 import { addObservation, listObservations } from './coupangObservationStore';
+import { computeMarketPie, computeEntryAnalysis } from './marketPieEngine';
 import { createOnboardingProfile, getProfile, buildRecommendations } from './onboardingEngine';
 import { PRICING_TABLE, DIFFICULTY_MULTIPLIERS, SUBSCRIPTIONS, SAAS_PLANS, priceFor } from './pricingEngine';
 import { buildPortfolio } from './portfolioEngine';
@@ -1149,7 +1150,7 @@ app.get('/api/ingest/coupang-benchmarks', (_req: Request, res: Response) => {
  * OpenClaw or a human posts prices they SEE on coupang.com.
  */
 app.post('/api/ingest/coupang-price', (req: Request, res: Response) => {
-  const { productName, priceKrw, url, category, source } = req.body || {};
+  const { productName, priceKrw, url, category, source, monthlySales, reviewCount } = req.body || {};
   if (!productName || !priceKrw) {
     return res.status(400).json({ error: 'productName and priceKrw are required' });
   }
@@ -1158,6 +1159,8 @@ app.post('/api/ingest/coupang-price', (req: Request, res: Response) => {
     priceKrw: Number(priceKrw),
     url: url ? String(url) : undefined,
     category: category ? String(category) : undefined,
+    monthlySales: monthlySales ? Number(monthlySales) : undefined,
+    reviewCount: reviewCount ? Number(reviewCount) : undefined,
     source: source ? String(source) : 'manual',
   });
   return res.status(201).json({ status: 'recorded', observation: obs });
@@ -1165,6 +1168,24 @@ app.post('/api/ingest/coupang-price', (req: Request, res: Response) => {
 
 app.get('/api/ingest/coupang-price', (_req: Request, res: Response) => {
   return res.status(200).json({ count: listObservations().length, observations: listObservations(50) });
+});
+
+/**
+ * Market pie (top-5 sellers by monthly sales) & entry-margin analysis.
+ */
+app.get('/api/market-pie', (req: Request, res: Response) => {
+  const group = (req.query.group as string) || '유아복';
+  return res.status(200).json(computeMarketPie(group));
+});
+
+app.post('/api/market-pie/entry', (req: Request, res: Response) => {
+  const { group, landedCostKrw, targetRoiPct, shippingFeeKrw } = req.body || {};
+  if (!group || !landedCostKrw) {
+    return res.status(400).json({ error: 'group and landedCostKrw are required' });
+  }
+  return res.status(200).json(
+    computeEntryAnalysis(String(group), Number(landedCostKrw), targetRoiPct ? Number(targetRoiPct) : 30, shippingFeeKrw ? Number(shippingFeeKrw) : undefined)
+  );
 });
 app.get('/api/coupang/seller-products', async (_req: Request, res: Response) => {
   try {

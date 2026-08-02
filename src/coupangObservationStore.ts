@@ -13,6 +13,8 @@ export interface CoupangPriceObservation {
   priceKrw: number;
   url?: string;
   category?: string;
+  monthlySales?: number;  // 쿠팡 월간 판매량 (OpenClaw가 페이지에서 읽은 값)
+  reviewCount?: number;   // 리뷰 수 (판매량 프록시)
   source: string; // 'openclaw' | 'manual' | ...
   capturedAt: string;
 }
