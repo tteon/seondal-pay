@@ -1,0 +1,88 @@
+# SEONDAL Product Ontology — OWL source (ODK-managed)
+# Ontology IRI: http://seondal.ai/ontology/seondal-product.owl
+# Lifecycle: ODK (ROBOT reason QC in CI) → release artifacts consumed by runtime.
+# Version info follows ODK conventions: dated releases + semantic tagging.
+
+Prefix(:=<http://seondal.ai/ontology/seondal-product#>)
+Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
+Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
+Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
+Prefix(xsd:=<http://www.w3.org/2001/XMLSchema#>)
+Prefix(schema:=<https://schema.org/>)
+Prefix(dcterms:=<http://purl.org/dc/terms/>)
+
+Ontology(<http://seondal.ai/ontology/seondal-product>
+  <http://seondal.ai/ontology/seondal-product/2026-08-02>
+  Annotation(dcterms:title "SEONDAL Product Sourcing Ontology")
+  Annotation(dcterms:description "Typed nodes for A2A e-commerce sourcing: product, circumstance, tariff compliance. Raw web text MUST be transformed into these nodes before sub-agent execution (AGENT.md Rule 2.1).")
+  Annotation(owl:versionInfo "2026-08-02")
+
+  # ── Core classes ────────────────────────────────────────────────
+  Declaration(Class(:Product))
+  SubClassOf(:Product schema:Product)
+  AnnotationAssertion(rdfs:comment :Product "A sellable item, aligned with schema.org/Product.")
+
+  Declaration(Class(:ProductOntologyNode))
+  SubClassOf(:ProductOntologyNode owl:Thing)
+  AnnotationAssertion(rdfs:comment :ProductOntologyNode "Typed, noise-filtered product knowledge node exchanged between agents.")
+
+  Declaration(Class(:UserCircumstanceNode))
+  AnnotationAssertion(rdfs:comment :UserCircumstanceNode "Seller circumstance: capital budget, stage (Early/Growth/Mature), interest profile (ROI bands, risk tolerance).")
+
+  Declaration(Class(:TariffComplianceNode))
+  AnnotationAssertion(rdfs:comment :TariffComplianceNode "KC safety regulation + origin/tariff compliance facts for a product import decision.")
+
+  Declaration(Class(:InterestProfile))
+  AnnotationAssertion(rdfs:comment :InterestProfile "Financial category of a seller: roiBands, minMarginKrw, riskTolerance.")
+
+  Declaration(Class(:MarginSnapshot))
+  AnnotationAssertion(rdfs:comment :MarginSnapshot "A point on the Coupang↔1688 margin curve produced by the comparator engine.")
+
+  # ── Object properties ───────────────────────────────────────────
+  Declaration(ObjectProperty(:hasSourcingNode))
+  SubObjectPropertyOf(:hasSourcingNode owl:topObjectProperty)
+  ObjectPropertyDomain(:hasSourcingNode :Product)
+  ObjectPropertyRange(:hasSourcingNode :ProductOntologyNode)
+
+  Declaration(ObjectProperty(:matchesProfile))
+  ObjectPropertyDomain(:matchesProfile :ProductOntologyNode)
+  ObjectPropertyRange(:matchesProfile :InterestProfile)
+
+  Declaration(ObjectProperty(:hasCompliance))
+  ObjectPropertyDomain(:hasCompliance :ProductOntologyNode)
+  ObjectPropertyRange(:hasCompliance :TariffComplianceNode)
+
+  Declaration(ObjectProperty(:hasSnapshot))
+  ObjectPropertyDomain(:hasSnapshot :ProductOntologyNode)
+  ObjectPropertyRange(:hasSnapshot :MarginSnapshot)
+
+  Declaration(ObjectProperty(:isTypeOf))
+  AnnotationAssertion(rdfs:comment :isTypeOf "hypernym relation for taxonomy enrichment (AWS ontology mining).")
+
+  Declaration(ObjectProperty(:sameAsSynonym))
+  AnnotationAssertion(rdfs:comment :sameAsSynonym "synonym relation between category terms (e.g., TV ~ Television).")
+
+  # ── Data properties ─────────────────────────────────────────────
+  Declaration(DataProperty(:moq))
+  SubDataPropertyOf(:moq schema:eligibleQuantity)
+  DataPropertyDomain(:moq :ProductOntologyNode)
+
+  Declaration(DataProperty(:shippingWeightGrm))
+  DataPropertyDomain(:shippingWeightGrm :ProductOntologyNode)
+
+  Declaration(DataProperty(:factoryLocation))
+  DataPropertyDomain(:factoryLocation :ProductOntologyNode)
+
+  Declaration(DataProperty(:landedCostKrw))
+  DataPropertyDomain(:landedCostKrw :MarginSnapshot)
+
+  Declaration(DataProperty(:coupangPriceKrw))
+  DataPropertyDomain(:coupangPriceKrw :MarginSnapshot)
+
+  Declaration(DataProperty(:roiPercent))
+  DataPropertyDomain(:roiPercent :MarginSnapshot)
+
+  Declaration(DataProperty(:kcCertificationRequired))
+  DataPropertyDomain(:kcCertificationRequired :TariffComplianceNode)
+  DataPropertyRange(:kcCertificationRequired xsd:boolean)
+)

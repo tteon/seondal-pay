@@ -53,6 +53,7 @@ spec:
               uid: loki
               type: loki
               access: proxy
+              isDefault: false
               url: http://loki.monitoring:3100
               jsonData:
                 maxLines: 1000
@@ -60,6 +61,7 @@ spec:
               uid: tempo
               type: tempo
               access: proxy
+              isDefault: false
               url: http://tempo.monitoring:3100
               jsonData:
                 tracesToLogsV2:
