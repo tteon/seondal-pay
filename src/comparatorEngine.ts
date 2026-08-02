@@ -14,7 +14,34 @@
 import { queryProducts } from './db';
 import { logEvent, comparatorSweeps, comparatorMarginGauge } from './observability';
 import { isCoupangConfigured, searchProducts, CoupangProduct } from './coupangPartnersClient';
+import { isSellerConfigured, scanSellerProducts, getSellerProduct, SellerProductSummary } from './coupangSellerClient';
 import { benchmarkForProduct } from './coupangBenchmarkEngine';
+
+// --- Seller own-listing price anchor (vendor-scoped, refreshed hourly) ---
+let sellerCache: { at: number; items: SellerProductSummary[] } = { at: 0, items: [] };
+const SELLER_CACHE_TTL = 60 * 60 * 1000;
+
+async function sellerListingPrice(product: any): Promise<{ priceKrw: number; matched: SellerProductSummary } | undefined> {
+  if (!isSellerConfigured()) return undefined;
+  if (Date.now() - sellerCache.at > SELLER_CACHE_TTL) {
+    sellerCache = { at: Date.now(), items: await scanSellerProducts(180).catch(() => []) };
+  }
+  if (sellerCache.items.length === 0) return undefined;
+  const titleTokens = (product.title || '').toLowerCase().split(/\s+/).filter((t: string) => t.length >= 2);
+  const match = sellerCache.items.find((s) => {
+    const name = (s.sellerProductName || '').toLowerCase();
+    const hits = titleTokens.filter((t: string) => name.includes(t)).length;
+    return hits >= Math.min(2, titleTokens.length);
+  });
+  if (!match) return undefined;
+  try {
+    const detail = await getSellerProduct(match.sellerProductId);
+    const price = detail.items?.find((i) => i.salePrice)?.salePrice;
+    return price ? { priceKrw: price, matched: match } : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export interface PriceSnapshot {
   productId: string;
@@ -99,13 +126,28 @@ export async function fetchRealCoupangPrice(
 ): Promise<{ priceKrw: number; source: 'partners-api' | 'mock-benchmark'; matched?: CoupangProduct } | undefined> {
   if (isCoupangConfigured()) {
     try {
-      // 1) per-product keyword search (most specific)
+      // 1) per-product keyword search (most specific; Partners API when available)
       const keyword = titleToKeyword(product.title || '');
       const results = await searchProducts(keyword, 5);
       if (results.length > 0) {
         const prices = results.map((r) => r.productPrice).sort((a, b) => a - b);
         const median = prices[Math.floor(prices.length / 2)];
         return { priceKrw: median, source: 'partners-api', matched: results[Math.floor(results.length / 2)] };
+      }
+      // 2) our own Coupang listing price (Seller API, vendor-scoped)
+      const seller = await sellerListingPrice(product);
+      if (seller) {
+        return {
+          priceKrw: seller.priceKrw,
+          source: 'partners-api',
+          matched: {
+            productName: `[자체 등록] ${seller.matched.sellerProductName}`,
+            productPrice: seller.priceKrw,
+            productUrl: `https://wing.coupang.com`,
+            productId: seller.matched.sellerProductId,
+            productImage: '',
+          } as CoupangProduct,
+        };
       }
       // 2) category-level real benchmark (median of best-sellers)
       const bench = benchmarkForProduct(product);

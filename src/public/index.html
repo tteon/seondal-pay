@@ -250,6 +250,10 @@
         <div class="card-h"><h2>⚖️ 쿠팡↔1688 ROI 리더보드</h2><span class="hint">comparator sweep</span></div>
         <div class="chart-wrap"><canvas id="roiChart"></canvas></div>
       </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-h"><h2>💰 마진 TOP 5 분포 (순마진 ₩)</h2><span class="hint">net margin after fees</span></div>
+        <div class="chart-wrap" style="height:280px"><canvas id="marginPie"></canvas></div>
+      </div>
     </div>
 
     <div class="card">
@@ -287,6 +291,10 @@
 <script>
 const API = '';
 let chart = null;
+let pieChart = null;
+
+// Validated categorical palette (fixed order, never cycled)
+const PIE_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4'];
 let currentTier = 3;
 let pricingData = null;
 
@@ -522,6 +530,7 @@ async function loadAll() {
     sysInfo.textContent = `uptime ${Math.round(s.system.uptimeSeconds/60)}m · discord ${s.alerts.discordEnabled ? '연동됨' : '미설정'} · ${s.fetchedAt.slice(11,19)}Z 갱신`;
     renderCatalog(s.products.items);
     renderChart(s.comparator.leaderboard);
+    renderMarginPie(s.comparator.leaderboard);
     chart && (chart._lb = s.comparator.leaderboard);
   } catch (e) { console.error(e); }
   loadOnboarding();
@@ -565,6 +574,52 @@ function renderChart(lb) {
     }
   });
   chart._lb = lb;
+}
+
+function renderMarginPie(lb) {
+  const css = v => getComputedStyle(document.body).getPropertyValue(v).trim();
+  const top = (lb || []).filter(s => s.marginKrw > 0).slice(0, 5);
+  const total = top.reduce((a, s) => a + s.marginKrw, 0);
+  if (pieChart) pieChart.destroy();
+  const el = document.getElementById('marginPie');
+  if (top.length === 0) {
+    el.parentElement.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-3);font-size:12px">양의 순마진 상품이 아직 없습니다 — 컴패레이터 스윕 후 표시됩니다.</div>';
+    return;
+  }
+  pieChart = new Chart(el, {
+    type: 'doughnut',
+    data: {
+      labels: top.map(s => (s.title || s.productId).slice(0, 14)),
+      datasets: [{
+        data: top.map(s => s.marginKrw),
+        backgroundColor: PIE_COLORS.slice(0, top.length),
+        borderColor: css('--surface-1'),
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            color: css('--ink-2'), boxWidth: 12, padding: 10, font: { size: 11 },
+            generateLabels: (c) => {
+              const base = Chart.overrides.doughnut.plugins.legend.labels.generateLabels(c);
+              base.forEach((l, i) => {
+                const v = top[i].marginKrw;
+                const pct = Math.round(v / total * 100);
+                l.text = `${l.text} — ₩${v.toLocaleString()} (${pct}%)`;
+              });
+              return base;
+            }
+          }
+        },
+        tooltip: { callbacks: { label: c => ` 순마진 ₩${c.parsed.toLocaleString()} (${Math.round(c.parsed / total * 100)}%)` } }
+      },
+      cutout: '58%'
+    }
+  });
 }
 
 async function sendChat(e) {

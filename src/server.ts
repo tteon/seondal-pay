@@ -56,6 +56,7 @@ import { routeOpportunity, listProfiles } from './interestProfileEngine';
 import { runLiveSourcingPipeline } from './liveSourcingPipeline';
 import { refreshCategoryBenchmarks, listCategoryBenchmarks } from './coupangBenchmarkEngine';
 import { isCoupangConfigured } from './coupangPartnersClient';
+import { scanSellerProducts, getSellerProduct, COUPANG_VENDOR_ID } from './coupangSellerClient';
 import { createOnboardingProfile, getProfile, buildRecommendations } from './onboardingEngine';
 import { PRICING_TABLE, DIFFICULTY_MULTIPLIERS, SUBSCRIPTIONS, SAAS_PLANS, priceFor } from './pricingEngine';
 import { buildPortfolio } from './portfolioEngine';
@@ -1140,6 +1141,26 @@ app.get('/api/ingest/coupang-benchmarks', (_req: Request, res: Response) => {
     coupangConfigured: isCoupangConfigured(),
     benchmarks: listCategoryBenchmarks()
   });
+});
+
+/**
+ * Our own Coupang listings (Seller API) — product info only.
+ * ⚠️ 정산/주문 엔드포인트는 사용하지 않습니다.
+ */
+app.get('/api/coupang/seller-products', async (_req: Request, res: Response) => {
+  try {
+    const items = await scanSellerProducts(parseInt((process.env.SELLER_SCAN_DAYS as string) || '180'));
+    const detailed = await Promise.all(items.slice(0, 20).map(async (p) => {
+      try { return await getSellerProduct(p.sellerProductId); } catch { return p; }
+    }));
+    return res.status(200).json({
+      vendorId: COUPANG_VENDOR_ID,
+      count: items.length,
+      products: detailed
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
 });
 
 /**
