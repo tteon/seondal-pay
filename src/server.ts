@@ -50,7 +50,7 @@ import {
   paymentRevenueSol,
   SERVICE_VERSION
 } from './observability';
-import { alertHighValueSourcing, extractRoiSignals } from './discordAlerter';
+import { alertHighValueSourcing, extractRoiSignals, isDiscordEnabled } from './discordAlerter';
 import { compareProduct, runComparatorSweep, getLatestSnapshots, getMarginCurve, startComparatorLoop } from './comparatorEngine';
 import { routeOpportunity, listProfiles } from './interestProfileEngine';
 import { runLiveSourcingPipeline } from './liveSourcingPipeline';
@@ -1082,6 +1082,87 @@ app.get('/api/comparator/curve/:productId', (req: Request, res: Response) => {
 
 app.get('/api/profiles', (_req: Request, res: Response) => {
   return res.status(200).json({ profiles: listProfiles() });
+});
+
+/**
+ * Wallet balance (live devnet query). ?address=<base58> to check any wallet,
+ * defaults to the merchant wallet.
+ */
+app.get('/api/wallet/balance', async (req: Request, res: Response) => {
+  try {
+    const addr = (req.query.address as string) || merchantPublicKey.toBase58();
+    const pubkey = new PublicKey(addr);
+    const lamports = await connection.getBalance(pubkey);
+    return res.status(200).json({
+      address: addr,
+      role: addr === merchantPublicKey.toBase58() ? 'merchant' : 'external',
+      balanceSol: lamports / 1e9,
+      lamports,
+      network: 'devnet',
+      explorerUrl: `https://explorer.solana.com/address/${addr}?cluster=devnet`,
+      fetchedAt: new Date().toISOString()
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Aggregated SaaS dashboard summary — everything the UI needs in one call.
+ */
+app.get('/api/dashboard/summary', async (_req: Request, res: Response) => {
+  try {
+    const products = await queryProducts();
+    const leaderboard = getLatestSnapshots();
+    let merchantBalanceSol: number | null = null;
+    try {
+      merchantBalanceSol = (await connection.getBalance(merchantPublicKey)) / 1e9;
+    } catch { /* devnet unreachable — leave null */ }
+
+    const gateway = getGatewayAnalytics();
+    return res.status(200).json({
+      merchant: {
+        publicKey: merchantPublicKey.toBase58(),
+        balanceSol: merchantBalanceSol,
+        network: 'devnet'
+      },
+      payments: {
+        activeChallenges: activeChallengeCount(),
+        processedSignatures: processedSignatures.size,
+        recentSignatures: Array.from(processedSignatures).slice(-5)
+      },
+      products: {
+        count: products.length,
+        items: products.slice(0, 20).map((p: any) => ({
+          productId: p.productId,
+          title: p.title,
+          priceUsd: p.price,
+          scrapedAt: p.scrapedAt,
+          roiPercent: leaderboard.find((s) => s.productId === p.productId)?.roiPercent ?? null
+        }))
+      },
+      comparator: { leaderboard: leaderboard.slice(0, 10) },
+      gateway: {
+        totalRevenueSol: gateway.metrics.totalSolRevenueCollected,
+        totalRequests: gateway.metrics.totalRequestsProcessed,
+        tierBreakdown: gateway.metrics.tierBreakdown,
+        activeApiKeys: gateway.activeApiKeysCount
+      },
+      alerts: {
+        discordEnabled: isDiscordEnabled(),
+        roiThresholdPercent: parseFloat(process.env.ROI_ALERT_MIN_PERCENT || '40')
+      },
+      system: {
+        version: SERVICE_VERSION,
+        uptimeSeconds: Math.round(process.uptime()),
+        env: process.env.DEPLOY_ENV || 'development',
+        dbBackend: products ? 'postgres-or-mock' : 'unknown'
+      },
+      fetchedAt: new Date().toISOString()
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
 });
 
 /**
