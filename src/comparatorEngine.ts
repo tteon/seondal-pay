@@ -136,13 +136,16 @@ export function getMarginCurve(productId: string): PriceSnapshot[] {
 
 let loopTimer: NodeJS.Timeout | null = null;
 
-/** Start the continuous comparison loop (disabled when intervalMs <= 0). */
-export function startComparatorLoop(intervalMs: number) {
+/** Start the continuous comparison loop (disabled when intervalMs <= 0).
+ *  Optional onSweep callback runs after every successful sweep. */
+export function startComparatorLoop(intervalMs: number, onSweep?: (snapshots: PriceSnapshot[]) => void) {
   if (intervalMs <= 0 || loopTimer) return;
   loopTimer = setInterval(() => {
-    runComparatorSweep().catch((err) =>
-      logEvent('error', 'comparator.sweep_failed', { error: err.message })
-    );
+    runComparatorSweep()
+      .then((snaps) => { try { onSweep?.(snaps); } catch { /* hook must not break the loop */ } })
+      .catch((err) =>
+        logEvent('error', 'comparator.sweep_failed', { error: err.message })
+      );
   }, intervalMs);
   loopTimer.unref?.();
   logEvent('info', 'comparator.loop_started', { intervalMs });

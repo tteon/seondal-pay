@@ -50,7 +50,7 @@ import {
   paymentRevenueSol,
   SERVICE_VERSION
 } from './observability';
-import { alertHighValueSourcing, extractRoiSignals, isDiscordEnabled } from './discordAlerter';
+import { alertHighValueSourcing, extractRoiSignals, isDiscordEnabled, alertSystemEvent } from './discordAlerter';
 import { compareProduct, runComparatorSweep, getLatestSnapshots, getMarginCurve, startComparatorLoop } from './comparatorEngine';
 import { routeOpportunity, listProfiles } from './interestProfileEngine';
 import { runLiveSourcingPipeline } from './liveSourcingPipeline';
@@ -58,6 +58,7 @@ import { createOnboardingProfile, getProfile, buildRecommendations } from './onb
 import { PRICING_TABLE, DIFFICULTY_MULTIPLIERS, SUBSCRIPTIONS, SAAS_PLANS, priceFor } from './pricingEngine';
 import { buildPortfolio } from './portfolioEngine';
 import { listCategories } from './categoryCatalog';
+import { listRules, upsertRule, deleteRule, evaluateRules, getFireHistory } from './alertRuleEngine';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 // Using Solana Devnet RPC
@@ -1241,6 +1242,43 @@ app.get('/api/categories', (_req: Request, res: Response) => {
 });
 
 /**
+ * User alert rules (ROI/margin/new-product/drift/price-drop) → Discord push.
+ */
+app.get('/api/alerts/rules', (req: Request, res: Response) => {
+  return res.status(200).json({ rules: listRules(req.query.userId as string | undefined) });
+});
+
+app.post('/api/alerts/rules', (req: Request, res: Response) => {
+  const { id, userId, name, trigger, params, enabled } = req.body;
+  const valid = ['roi_above', 'margin_above', 'new_product', 'portfolio_drift', 'price_drop'];
+  if (!id && (!userId || !trigger || !valid.includes(trigger))) {
+    return res.status(400).json({ error: `userId and trigger (${valid.join('|')}) are required for new rules` });
+  }
+  const rule = upsertRule({ id, userId, name, trigger, params, enabled });
+  if (!rule) return res.status(404).json({ error: 'rule not found' });
+  return res.status(id ? 200 : 201).json(rule);
+});
+
+app.delete('/api/alerts/rules/:id', (req: Request, res: Response) => {
+  return deleteRule(req.params.id)
+    ? res.status(200).json({ deleted: req.params.id })
+    : res.status(404).json({ error: 'rule not found' });
+});
+
+app.get('/api/alerts/history', (_req: Request, res: Response) => {
+  return res.status(200).json({ fires: getFireHistory() });
+});
+
+/** Manual evaluation (demo + tests): fire matching rules now, push to Discord. */
+app.post('/api/alerts/evaluate', async (req: Request, res: Response) => {
+  const fires = evaluateRules('sweep');
+  for (const f of fires) {
+    await alertSystemEvent(f.title, `${f.description}\n\n— 규칙: ${f.ruleName}`, 'info');
+  }
+  return res.status(200).json({ fired: fires.length, fires });
+});
+
+/**
  * Pricing table with unit economics (measured cost → retail price → margin).
  * ?tier=3&difficulty=deep for a computed quote.
  */
@@ -1260,8 +1298,13 @@ app.get('/api/pricing', (req: Request, res: Response) => {
 
 app.listen(PORT, '0.0.0.0', async () => {
   await initDb();
-  // Continuous Coupang ↔ 1688 margin comparison (default 15min; 0 disables)
-  startComparatorLoop(parseInt(process.env.COMPARATOR_INTERVAL_MS || '900000'));
-  runComparatorSweep().catch(() => { /* warm-up best effort */ });
+  // Continuous Coupang ↔ 1688 margin comparison + user alert-rule evaluation
+  startComparatorLoop(parseInt(process.env.COMPARATOR_INTERVAL_MS || '900000'), async () => {
+    const fires = evaluateRules('sweep');
+    for (const f of fires) {
+      await alertSystemEvent(f.title, `${f.description}\n\n— 규칙: ${f.ruleName}`, 'info');
+    }
+  });
+  runComparatorSweep().then(() => evaluateRules('sweep')).catch(() => { /* warm-up best effort */ });
   console.log(`Pay.sh Data API Server (Agent B) running on http://0.0.0.0:${PORT}`);
 });

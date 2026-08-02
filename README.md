@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="src/public/assets/brand/logo-banner.png" alt="SEONDAL — Prestigious Merchant & Asset Management" width="480">
+</p>
+
 # SEONDAL // Intelligence — `seondal-pay`
 
 > **Clear Insights, Fair Commerce by SEONDAL**
