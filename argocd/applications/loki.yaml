@@ -18,6 +18,13 @@ spec:
             enabled: false
         promtail:
           enabled: true
+        # loki-stack ships its own grafana datasource (isDefault: true) which
+        # collides with kube-prometheus-stack's default Prometheus datasource
+        # ("only one default per org"). We register Loki manually there.
+        grafana:
+          sidecar:
+            datasources:
+              enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
