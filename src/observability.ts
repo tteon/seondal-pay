@@ -210,6 +210,14 @@ export const profileMatches = new client.Counter({
   registers: [metricsRegistry],
 });
 
+/** Coupang retail price observations ingested (OpenClaw/manual) */
+export const coupangObservations = new client.Counter({
+  name: 'seondal_coupang_observations_total',
+  help: 'Coupang retail price observations ingested',
+  labelNames: ['source'] as const,
+  registers: [metricsRegistry],
+});
+
 /** Express middleware: measure every request */
 export function httpMetricsMiddleware(req: any, res: any, next: any) {
   const start = process.hrtime.bigint();

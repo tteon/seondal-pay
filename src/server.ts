@@ -57,6 +57,7 @@ import { runLiveSourcingPipeline } from './liveSourcingPipeline';
 import { refreshCategoryBenchmarks, listCategoryBenchmarks } from './coupangBenchmarkEngine';
 import { isCoupangConfigured } from './coupangPartnersClient';
 import { scanSellerProducts, getSellerProduct, COUPANG_VENDOR_ID } from './coupangSellerClient';
+import { addObservation, listObservations } from './coupangObservationStore';
 import { createOnboardingProfile, getProfile, buildRecommendations } from './onboardingEngine';
 import { PRICING_TABLE, DIFFICULTY_MULTIPLIERS, SUBSCRIPTIONS, SAAS_PLANS, priceFor } from './pricingEngine';
 import { buildPortfolio } from './portfolioEngine';
@@ -1144,9 +1145,27 @@ app.get('/api/ingest/coupang-benchmarks', (_req: Request, res: Response) => {
 });
 
 /**
- * Our own Coupang listings (Seller API) — product info only.
- * ⚠️ 정산/주문 엔드포인트는 사용하지 않습니다.
+ * Coupang retail price observations ingestion (product info only).
+ * OpenClaw or a human posts prices they SEE on coupang.com.
  */
+app.post('/api/ingest/coupang-price', (req: Request, res: Response) => {
+  const { productName, priceKrw, url, category, source } = req.body || {};
+  if (!productName || !priceKrw) {
+    return res.status(400).json({ error: 'productName and priceKrw are required' });
+  }
+  const obs = addObservation({
+    productName: String(productName),
+    priceKrw: Number(priceKrw),
+    url: url ? String(url) : undefined,
+    category: category ? String(category) : undefined,
+    source: source ? String(source) : 'manual',
+  });
+  return res.status(201).json({ status: 'recorded', observation: obs });
+});
+
+app.get('/api/ingest/coupang-price', (_req: Request, res: Response) => {
+  return res.status(200).json({ count: listObservations().length, observations: listObservations(50) });
+});
 app.get('/api/coupang/seller-products', async (_req: Request, res: Response) => {
   try {
     const items = await scanSellerProducts(parseInt((process.env.SELLER_SCAN_DAYS as string) || '180'));

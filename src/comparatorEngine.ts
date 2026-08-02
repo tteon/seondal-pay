@@ -16,6 +16,7 @@ import { logEvent, comparatorSweeps, comparatorMarginGauge } from './observabili
 import { isCoupangConfigured, searchProducts, CoupangProduct } from './coupangPartnersClient';
 import { isSellerConfigured, scanSellerProducts, getSellerProduct, SellerProductSummary } from './coupangSellerClient';
 import { benchmarkForProduct } from './coupangBenchmarkEngine';
+import { matchObservation } from './coupangObservationStore';
 
 // --- Seller own-listing price anchor (vendor-scoped, refreshed hourly) ---
 let sellerCache: { at: number; items: SellerProductSummary[] } = { at: 0, items: [] };
@@ -59,7 +60,7 @@ export interface PriceSnapshot {
   netRevenueKrw: number;         // coupangPrice − fee − shipping
   marginKrw: number;             // netRevenue − landedCost
   roiPercent: number;            // margin / landedCost × 100
-  coupangSource?: 'partners-api' | 'mock-benchmark';
+  coupangSource?: 'partners-api' | 'mock-benchmark' | 'observed';
   coupangProductName?: string;
   coupangProductUrl?: string;
 }
@@ -123,7 +124,23 @@ function titleToKeyword(title: string): string {
  */
 export async function fetchRealCoupangPrice(
   product: any
-): Promise<{ priceKrw: number; source: 'partners-api' | 'mock-benchmark'; matched?: CoupangProduct } | undefined> {
+): Promise<{ priceKrw: number; source: 'partners-api' | 'mock-benchmark' | 'observed'; matched?: CoupangProduct } | undefined> {
+  // 0) REAL observed prices (OpenClaw/manual ingestion) — highest priority
+  const obs = matchObservation(product.title || '');
+  if (obs) {
+    return {
+      priceKrw: obs.priceKrw,
+      source: 'observed',
+      matched: {
+        productName: `[실측 ${obs.source}] ${obs.productName}`,
+        productPrice: obs.priceKrw,
+        productUrl: obs.url || '',
+        productId: 0,
+        productImage: '',
+      } as CoupangProduct,
+    };
+  }
+
   if (isCoupangConfigured()) {
     try {
       // 1) per-product keyword search (most specific; Partners API when available)
@@ -185,7 +202,7 @@ function wholesaleBaseKrw(product: any): { baseKrw: number; usd: number; cny?: n
   return { baseKrw: Math.round(price * FX_KRW_PER_USD), usd: price };
 }
 
-function buildSnapshot(product: any, priceKrw: number, source: 'partners-api' | 'mock-benchmark', matched?: CoupangProduct): PriceSnapshot {
+function buildSnapshot(product: any, priceKrw: number, source: 'partners-api' | 'mock-benchmark' | 'observed', matched?: CoupangProduct): PriceSnapshot {
   const { baseKrw, usd, cny } = wholesaleBaseKrw(product);
   const weight = shippingWeightGrm(product);
   const intlShippingKrw = estimateIntlShippingKrw(weight);

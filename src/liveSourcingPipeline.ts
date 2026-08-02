@@ -125,16 +125,18 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
     durationMs: Date.now() - t0,
   });
 
-  // 4. Comparator margin analysis
+  // 4. Comparator margin analysis — the Coupang seller's estimated economics
   t0 = Date.now();
   const snap = await compareProduct(candidate);
   if (snap) {
-    const srcLabel = snap.coupangSource === 'partners-api' ? 'Coupang Partners API 실측' : '벤치마크(합성)';
+    const srcLabel =
+      snap.coupangSource === 'observed' ? '쿠팡 실측(수집)' :
+      snap.coupangSource === 'partners-api' ? 'Coupang API 실측' : '벤치마크(합성)';
     steps.push({
       step: 4,
       key: 'comparator.margin',
-      title: '⚖️ 쿠팡↔1688 순마진 분석',
-      detail: `랜디드코스트 ₩${snap.landedCostKrw.toLocaleString()} (도매+국제운송 ₩${snap.intlShippingKrw.toLocaleString()}+관세 ₩${snap.tariffKrw.toLocaleString()}) → 순수익 ₩${snap.netRevenueKrw.toLocaleString()} (쿠팡가 ₩${snap.coupangPriceKrw.toLocaleString()} [${srcLabel}] − 수수료 ₩${snap.coupangFeeKrw.toLocaleString()} − 배송 ₩${snap.coupangShippingFeeKrw.toLocaleString()}) → ROI ${snap.roiPercent}%`,
+      title: '⚖️ 쿠팡 판매자 추정 경제 분석',
+      detail: `이 상품을 파는 쿠팡 셀러의 추정 구조 — 판매가 ₩${snap.coupangPriceKrw.toLocaleString()} [${srcLabel}] − 수수료 ₩${snap.coupangFeeKrw.toLocaleString()} − 배송 ₩${snap.coupangShippingFeeKrw.toLocaleString()} = 순수익 ₩${snap.netRevenueKrw.toLocaleString()} · 원가(랜디드) ₩${snap.landedCostKrw.toLocaleString()} → 추정 마진 ₩${snap.marginKrw.toLocaleString()} (${snap.roiPercent}%)`,
       data: snap,
       durationMs: Date.now() - t0,
     });
