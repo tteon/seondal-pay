@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: seondal-pay
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/tteon/seondal-pay.git
+    targetRevision: main
+    path: k8s/seondal-pay
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: seondal
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

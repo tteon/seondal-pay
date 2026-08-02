@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seondal-pay
+  namespace: seondal
+  labels:
+    app: seondal-pay
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: seondal-pay
+  template:
+    metadata:
+      labels:
+        app: seondal-pay
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: seondal-pay
+      containers:
+        - name: seondal-pay
+          image: us-central1-docker.pkg.dev/solana-503111/seondal/seondal-pay:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: seondal-pay-config
+            # Optional: DB credentials etc. (created once by scripts/bootstrap_gke.sh)
+            - secretRef:
+                name: seondal-secrets
+                optional: true
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            # Optional GCP service-account key (enables live GCS/Firestore).
+            # Without it the app runs on its local mock backends.
+            - name: gcp-key
+              mountPath: /app/gcp-key.json
+              subPath: gcp-key.json
+              readOnly: true
+            # Optional merchant wallet keypair (persistent merchant identity).
+            - name: merchant-keypair
+              mountPath: /app/merchant-keypair.json
+              subPath: merchant-keypair.json
+              readOnly: true
+      volumes:
+        - name: gcp-key
+          secret:
+            secretName: seondal-secrets
+            items:
+              - key: gcp-key.json
+                path: gcp-key.json
+            optional: true
+        - name: merchant-keypair
+          secret:
+            secretName: seondal-secrets
+            items:
+              - key: merchant-keypair.json
+                path: merchant-keypair.json
+            optional: true

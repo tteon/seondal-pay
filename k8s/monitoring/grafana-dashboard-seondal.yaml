@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-seondal-pay
+  namespace: monitoring
+  labels:
+    # Picked up automatically by the kube-prometheus-stack Grafana sidecar
+    grafana_dashboard: "1"
+data:
+  seondal-pay.json: |
+    {
+      "uid": "seondal-pay-overview",
+      "title": "SEONDAL Pay — Payments & Pipeline",
+      "tags": ["seondal", "mpp", "solana"],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "15s",
+      "time": { "from": "now-1h", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Verified Revenue (SOL)",
+          "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum(seondal_payment_revenue_sol_total)", "refId": "A" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "none", "decimals": 3 }, "overrides": [] },
+          "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Active Challenges",
+          "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "seondal_payment_active_challenges", "refId": "A" }
+          ],
+          "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "Payment Verifications (rate)",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum by (protocol, result) (rate(seondal_payment_verifications_total[5m]))", "legendFormat": "{{protocol}} / {{result}}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "402 Challenges Issued (rate)",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum by (tier) (rate(seondal_payment_challenges_issued_total[5m]))", "legendFormat": "Tier {{tier}}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "Replay Rejections & TTL Expiries (rate)",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum by (protocol) (rate(seondal_payment_replay_rejections_total[5m]))", "legendFormat": "replay / {{protocol}}", "refId": "A" },
+            { "expr": "rate(seondal_payment_challenges_expired_total[5m])", "legendFormat": "expired", "refId": "B" }
+          ]
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "Scrape Duration p95",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "histogram_quantile(0.95, sum by (le, outcome) (rate(seondal_scrape_duration_seconds_bucket[5m])))", "legendFormat": "p95 / {{outcome}}", "refId": "A" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+        },
+        {
+          "id": 7,
+          "type": "timeseries",
+          "title": "HTTP Requests (rate by status)",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 22 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum by (status_code) (rate(seondal_http_request_duration_seconds_count[5m]))", "legendFormat": "{{status_code}}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "DB Operations (rate)",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum by (operation, backend, result) (rate(seondal_db_operations_total[5m]))", "legendFormat": "{{operation}} / {{backend}} / {{result}}", "refId": "A" }
+          ]
+        }
+      ]
+    }

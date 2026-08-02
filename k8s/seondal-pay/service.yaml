@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: seondal-pay
+  namespace: seondal
+  labels:
+    app: seondal-pay
+spec:
+  # LoadBalancer: evaluators reach the public API + dashboard via external IP
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 3000
+      name: http
+  selector:
+    app: seondal-pay

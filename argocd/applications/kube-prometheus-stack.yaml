@@ -1,0 +1,52 @@
+# Prometheus + Grafana (kube-prometheus-stack)
+# NOTE: targetRevision is a semver range so ArgoCD can always resolve a chart.
+#       Pin an exact version for production.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: ">=70.0.0"
+    helm:
+      releaseName: kube-prometheus-stack
+      values: |
+        prometheus:
+          prometheusSpec:
+            retention: 7d
+        grafana:
+          adminPassword: seondal-admin   # demo credential — rotate in production
+          service:
+            type: LoadBalancer            # evaluators get a public Grafana IP
+          additionalDataSources:
+            - name: Loki
+              uid: loki
+              type: loki
+              access: proxy
+              url: http://loki.monitoring:3100
+              jsonData:
+                maxLines: 1000
+            - name: Tempo
+              uid: tempo
+              type: tempo
+              access: proxy
+              url: http://tempo.monitoring:3100
+              jsonData:
+                tracesToLogsV2:
+                  datasourceUid: loki
+                  spanStartTimeShift: "-1h"
+                  spanEndTimeShift: "1h"
+                  filterByTraceID: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+local_gcp_mock
+*.log
+.env
+gcp-key.json
+client-keypair.json
+merchant-keypair.json
+scripts
+k8s
+argocd
