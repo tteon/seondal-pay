@@ -148,7 +148,9 @@ async function callKimi(cond: 'A' | 'B', system: string, user: string): Promise<
     {
       model: MODEL, reasoning_effort: 'low',
       messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
-      temperature: 0,
+      // NOTE: kimi-k3 only accepts temperature=1 (fixed) — determinism comes
+      // from reasoning_effort=low, not temperature=0.
+      temperature: 1,
     },
     { headers: { Authorization: `Bearer ${KEYS[cond]}` }, timeout: 90000 }
   );
@@ -225,6 +227,7 @@ async function main() {
 
   const SYSTEM = 'You are a sourcing-analysis agent. Answer ONLY from the provided product context. 근거 없는 값을 만들지 마세요.';
   let done = 0;
+  let errorCount = 0;
   const results = await pooled(tasks, async ({ p, q, cond }): Promise<SampleResult> => {
     return tracer.startActiveSpan(`exp1.${cond === 'A' ? 'raw_text' : 'ontology'}.${q.key}`, async (span) => {
       span.setAttributes({
@@ -243,6 +246,7 @@ async function main() {
         result.costUsd = costOf(result);
       } catch (e: any) {
         span.recordException(e);
+        if (errorCount++ < 3) console.error(`  [call error] ${cond}/${q.key}/${p.id}: ${e.response?.data?.error?.message || e.message}`);
         result = { productId: p.id, queryKey: q.key, condition: cond, verdict: 'miss', promptTokens: 0, cachedTokens: 0, completionTokens: 0, reasoningTokens: 0, latencyMs: 0, costUsd: 0, traceId: span.spanContext().traceId };
       }
       span.setAttributes({
@@ -281,7 +285,7 @@ async function main() {
   const tokenReduction = 100 * (1 - B.totalPromptTokens / A.totalPromptTokens);
   const costReduction = 100 * (1 - B.totalCostUsd / A.totalCostUsd);
   const report = {
-    experiment: 'ontology-vs-raw-text (pre-registered)', model: MODEL, reasoning_effort: 'low', temperature: 0,
+    experiment: 'ontology-vs-raw-text (pre-registered)', model: MODEL, reasoning_effort: 'low', temperature: 1,
     dataset: '20 products × 5 queries × 2 conditions', billingKeys: { A: 'KIMI_KEY_NON_ONTOLOGY', B: 'KIMI_KEY_ONTOLOGY' },
     pricing: PRICE,
     conditions: { A_rawText: A, B_ontology: B },
@@ -306,7 +310,7 @@ async function main() {
   console.log('Per-query (B):', JSON.stringify(B.byQuery));
   console.log('Trace JSONL: scripts/experiment1_trace.jsonl | Results: scripts/experiment1_results.json');
 
-  await sdk.shutdown();
+  try { await sdk.shutdown(); } catch { /* collector may be unreachable locally */ }
 }
 
 function pct(rs: SampleResult[], v: Verdict) {

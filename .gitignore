@@ -16,3 +16,5 @@ local_gcp_mock/
 # System files
 .DS_Store
 *.log
+.venv/
+experiments/exp*_trace.jsonl

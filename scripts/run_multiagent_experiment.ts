@@ -78,7 +78,7 @@ async function callKimi(cond: 'A' | 'B', system: string, user: string): Promise<
   const start = Date.now();
   const res = await axios.post(
     KIMI_API_URL,
-    { model: MODEL, reasoning_effort: 'low', messages: [{ role: 'system', content: system }, { role: 'user', content: user }], temperature: 0 },
+    { model: MODEL, reasoning_effort: 'low', messages: [{ role: 'system', content: system }, { role: 'user', content: user }], temperature: 1 },
     { headers: { Authorization: `Bearer ${KEYS[cond]}` }, timeout: 90000 }
   );
   const u = res.data?.usage || {};
@@ -247,7 +247,7 @@ async function main() {
   const qualityGain = composite(B) - composite(A);
   const tokenRatio = B.totalPromptTokens / A.totalPromptTokens;
   const report = {
-    experiment: 'multiagent-role-decomposition (pre-registered)', model: MODEL, reasoning_effort: 'low', temperature: 0,
+    experiment: 'multiagent-role-decomposition (pre-registered)', model: MODEL, reasoning_effort: 'low', temperature: 1,
     dataset: `${DATASET.length} products`, billingKeys: { A: 'KIMI_KEY_NON_ONTOLOGY', B: 'KIMI_KEY_ONTOLOGY' },
     conditions: { A_unified: A, B_role_decomposed: B },
     verdicts: {
@@ -268,7 +268,7 @@ async function main() {
   console.log(`OVERALL: ${report.verdicts.overallPass ? '✅ PASS' : '❌ FAIL'}`);
   console.log('Trace JSONL: scripts/experiment2_trace.jsonl | Results: scripts/experiment2_results.json');
 
-  await sdk.shutdown();
+  try { await sdk.shutdown(); } catch { /* collector may be unreachable locally */ }
 }
 
 main().catch((e) => { console.error(e.message); process.exit(1); });

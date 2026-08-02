@@ -34,6 +34,14 @@ spec:
             - secretRef:
                 name: seondal-secrets
                 optional: true
+          env:
+            # .env carries DB_PASS; the app reads DB_PASSWORD — map it here.
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: seondal-secrets
+                  key: DB_PASS
+                  optional: true
           resources:
             requests:
               cpu: "250m"
@@ -65,6 +73,30 @@ spec:
               mountPath: /app/merchant-keypair.json
               subPath: merchant-keypair.json
               readOnly: true
+        # Cloud SQL Auth Proxy sidecar: exposes Cloud SQL on 127.0.0.1:5432
+        # (app connects with DB_HOST=127.0.0.1). Uses the same gcp-key secret.
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+          args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "solana-503111:us-central1:my-db-instance"
+          env:
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /secrets/gcp/gcp-key.json
+          volumeMounts:
+            - name: gcp-key
+              mountPath: /secrets/gcp
+              readOnly: true
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
       volumes:
         - name: gcp-key
           secret:

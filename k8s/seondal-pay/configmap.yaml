@@ -16,6 +16,10 @@ data:
   MPP_CHALLENGE_TTL_SECONDS: "300"
   MPP_REALM: "seocho-pay"
   MPP_SOLANA_NETWORK: "devnet"
+  # Cloud SQL via Auth Proxy sidecar (same pod localhost)
+  DB_HOST: "127.0.0.1"
+  DB_PORT: "5432"
+  DB_NAME: "app_db"
   # Public base URL used in Discord/OpenClaw handoff payloads.
   # Update after the LoadBalancer IP is assigned (or set via DNS).
   PUBLIC_BASE_URL: "http://localhost:3000"

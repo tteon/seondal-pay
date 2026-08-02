@@ -66,6 +66,8 @@ spec:
                       {{ range .Alerts }}*{{ .Annotations.summary }}*
                       {{ .Annotations.description }}
                       {{ end }}
+              # chart injects a Watchdog sub-route → receiver 'null'; it must exist
+              - name: "null"
         grafana:
           adminPassword: seondal-admin   # demo credential — rotate in production
           service:
