@@ -55,7 +55,9 @@ import { compareProduct, runComparatorSweep, getLatestSnapshots, getMarginCurve,
 import { routeOpportunity, listProfiles } from './interestProfileEngine';
 import { runLiveSourcingPipeline } from './liveSourcingPipeline';
 import { createOnboardingProfile, getProfile, buildRecommendations } from './onboardingEngine';
-import { PRICING_TABLE, DIFFICULTY_MULTIPLIERS, SUBSCRIPTIONS, priceFor } from './pricingEngine';
+import { PRICING_TABLE, DIFFICULTY_MULTIPLIERS, SUBSCRIPTIONS, SAAS_PLANS, priceFor } from './pricingEngine';
+import { buildPortfolio } from './portfolioEngine';
+import { listCategories } from './categoryCatalog';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 // Using Solana Devnet RPC
@@ -1214,6 +1216,31 @@ app.get('/api/onboarding/:userId', async (req: Request, res: Response) => {
 });
 
 /**
+ * Category × ROI portfolio builder — real allocation math from live catalog.
+ */
+app.post('/api/portfolio', async (req: Request, res: Response) => {
+  const { capitalKrw, level, categories, categoryWeights, excludedCategories } = req.body;
+  const lvl = ['beginner', 'growth', 'mature'].includes(level) ? level : 'beginner';
+  try {
+    const result = await buildPortfolio({
+      capitalKrw: Number(capitalKrw) || 3000000,
+      level: lvl,
+      categories: Array.isArray(categories) ? categories : undefined,
+      categoryWeights: categoryWeights && typeof categoryWeights === 'object' ? categoryWeights : undefined,
+      excludedCategories: Array.isArray(excludedCategories) ? excludedCategories : undefined,
+    });
+    return res.status(200).json(result);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/** Cross-border category knowledge base (beginner fit, demand, margin, regulation). */
+app.get('/api/categories', (_req: Request, res: Response) => {
+  return res.status(200).json({ categories: listCategories() });
+});
+
+/**
  * Pricing table with unit economics (measured cost → retail price → margin).
  * ?tier=3&difficulty=deep for a computed quote.
  */
@@ -1225,6 +1252,7 @@ app.get('/api/pricing', (req: Request, res: Response) => {
     pricing: PRICING_TABLE,
     difficultyMultipliers: DIFFICULTY_MULTIPLIERS,
     subscriptions: SUBSCRIPTIONS,
+    plans: SAAS_PLANS,
     quote,
     note: 'Costs measured from Kimi K3 experiment usage; prices target ≥80% gross margin per tier.'
   });

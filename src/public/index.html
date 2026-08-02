@@ -191,6 +191,21 @@
     <div id="recList" style="padding:8px 0"></div>
   </div>
 
+  <!-- portfolio builder -->
+  <div class="card" id="pfCard" style="display:none; margin-bottom:14px">
+    <div class="card-h">
+      <h2>🧺 예산 포트폴리오 (카테고리 × ROI)</h2>
+      <span class="hint"><button class="icon-btn" onclick="buildPf()">생성 ↻</button></span>
+    </div>
+    <div id="catPanel" style="padding:10px 16px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px"></div>
+    <div id="pfSummary" style="padding:10px 16px;font-size:12.5px;color:var(--ink-2);border-bottom:1px solid var(--line)"></div>
+    <table>
+      <thead><tr><th>카테고리</th><th>상품</th><th>발주수량</th><th>발주비용</th><th>예상판매</th><th>예상이익</th><th>ROI</th></tr></thead>
+      <tbody id="pfBody"></tbody>
+    </table>
+    <div id="pfPlan" style="padding:10px 16px;font-size:12px;color:var(--ink-2);border-top:1px solid var(--line)"></div>
+  </div>
+
   <div class="grid">
     <div>
       <div class="card">
@@ -282,12 +297,70 @@ async function doLogin() {
     sessionStorage.setItem('seondal_session', d.token);
     sessionStorage.setItem('seondal_user', d.user.username);
     loginView.style.display = 'none'; appView.style.display = 'block';
-    loadAll(); loadPricing(); setInterval(loadAll, 30000);
+    loadAll(); loadPricing(); loadCategories(); setInterval(loadAll, 30000);
   } else { loginMsg.textContent = '로그인 실패'; }
 }
 function logout() { sessionStorage.clear(); location.reload(); }
 
-// ---------- onboarding ----------
+// ---------- categories & portfolio ----------
+const catState = {}; // category name → weight (0=off, 1..3)
+const FIT_STYLE = {
+  easy:   { icon: '🟢', label: '초보 적합' },
+  medium: { icon: '🟡', label: '보통' },
+  hard:   { icon: '🔴', label: '어려움' },
+  avoid:  { icon: '⛔', label: '회피 권장' },
+};
+async function loadCategories() {
+  const r = await fetch(API + '/api/categories');
+  const d = await r.json();
+  catPanel.innerHTML = d.categories.map(c => {
+    const f = FIT_STYLE[c.beginnerFit];
+    const w = catState[c.name] ?? (c.beginnerFit === 'avoid' ? 0 : 1);
+    catState[c.name] = w;
+    return `<div class="pill" style="display:inline-flex;align-items:center;gap:6px;cursor:default;padding:6px 10px" title="${c.why} · 규제: ${c.regulation || '없음'}">
+      ${f.icon} <b>${c.name}</b> · 🔥${c.koreaDemand} · 마진 ${c.marginBand[0]}~${c.marginBand[1]}%
+      <button class="icon-btn" style="padding:1px 7px" onclick="catWeight('${c.name}',-1)">−</button>
+      <b id="w-${c.name}">${w > 0 ? '×' + w : '끔'}</b>
+      <button class="icon-btn" style="padding:1px 7px" onclick="catWeight('${c.name}',1)">+</button>
+    </div>`;
+  }).join('');
+}
+function catWeight(name, delta) {
+  const cur = catState[name] ?? 1;
+  const next = Math.max(0, Math.min(3, cur + delta));
+  catState[name] = next;
+  document.getElementById('w-' + name).textContent = next > 0 ? '×' + next : '끔';
+  buildPf();
+}
+async function buildPf() {
+  const raw = sessionStorage.getItem('seondal_profile');
+  const p = raw ? JSON.parse(raw) : { capitalKrw: 3000000, level: 'beginner' };
+  pfCard.style.display = 'block';
+  pfBody.innerHTML = '<tr><td colspan="7" style="color:var(--ink-3)">계산 중…</td></tr>';
+  const r = await fetch(API + '/api/portfolio', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      capitalKrw: p.capitalKrw, level: p.level,
+      categoryWeights: catState,
+      excludedCategories: Object.keys(catState).filter(k => catState[k] === 0),
+    })
+  });
+  const d = await r.json();
+  pfSummary.innerHTML = `자본 <b>₩${d.capitalKrw.toLocaleString()}</b> · 투입 <b>₩${d.totals.orderCostKrw.toLocaleString()}</b> (${Math.round(d.deployRatio*100)}% 중) · 예비비 <b>₩${d.cashReserveKrw.toLocaleString()}</b> · 전량 회전 시 예상이익 <b style="color:var(--good-ink)">₩${d.totals.expectedProfitKrw.toLocaleString()} (+${d.totals.expectedRoiPct}%)</b>`;
+  pfBody.innerHTML = d.lines.map(l => `
+    <tr>
+      <td><span class="pill">${l.category}</span></td>
+      <td title="${l.productId}">${(l.title||'').slice(0,22)}…</td>
+      <td>${l.orderQty}개 (MOQ ${l.moq})</td>
+      <td>₩${l.orderCostKrw.toLocaleString()}</td>
+      <td>₩${l.expectedSellKrw.toLocaleString()}</td>
+      <td style="color:var(--good-ink);font-weight:700">₩${l.expectedProfitKrw.toLocaleString()}</td>
+      <td>${roiBadge(l.roiPercent)}</td>
+    </tr>`).join('') || '<tr><td colspan="7" style="color:var(--ink-3)">예산 내 발주 가능 상품 없음</td></tr>';
+  pfPlan.innerHTML = d.actionPlan.map(s => `<div style="padding:2px 0">${s}</div>`).join('');
+  if (d.infeasible.length) pfPlan.innerHTML += `<div style="margin-top:6px;color:var(--ink-3)">제외: ${d.infeasible.map(x => x.productId).join(', ')}</div>`;
+}
+
 function showOnboard() { onboardView.style.display = 'grid'; }
 async function doOnboard() {
   const wallet = obWallet.value.trim();
@@ -345,6 +418,7 @@ function renderOnboarding(d) {
     tMyBalance.innerHTML = '–<span class="unit">SOL</span>';
     tMyAddr.textContent = '미연동';
   }
+  buildPf();
 }
 
 async function loadAll() {
@@ -452,7 +526,7 @@ function addMsg(cls, html) {
 }
 if (sessionStorage.getItem('seondal_session')) {
   loginView.style.display = 'none'; appView.style.display = 'block';
-  loadAll(); loadPricing(); setInterval(loadAll, 30000);
+  loadAll(); loadPricing(); loadCategories(); setInterval(loadAll, 30000);
 }
 </script>
 </body>
