@@ -15,6 +15,18 @@ spec:
     helm:
       releaseName: kube-prometheus-stack
       values: |
+        # GKE Autopilot: control-plane components are managed & kube-system is
+        # read-only — disable their monitors (standard GKE practice).
+        kubeEtcd:
+          enabled: false
+        kubeScheduler:
+          enabled: false
+        kubeControllerManager:
+          enabled: false
+        kubeProxy:
+          enabled: false
+        kubeApiServer:
+          enabled: false
         prometheus:
           prometheusSpec:
             retention: 7d
@@ -78,3 +90,5 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      # CRD annotations exceed kubectl-apply 256KB limit → server-side apply
+      - ServerSideApply=true
