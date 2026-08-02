@@ -54,6 +54,8 @@ import { alertHighValueSourcing, extractRoiSignals, isDiscordEnabled, alertSyste
 import { compareProduct, runComparatorSweep, getLatestSnapshots, getMarginCurve, startComparatorLoop } from './comparatorEngine';
 import { routeOpportunity, listProfiles } from './interestProfileEngine';
 import { runLiveSourcingPipeline } from './liveSourcingPipeline';
+import { refreshCategoryBenchmarks, listCategoryBenchmarks } from './coupangBenchmarkEngine';
+import { isCoupangConfigured } from './coupangPartnersClient';
 import { createOnboardingProfile, getProfile, buildRecommendations } from './onboardingEngine';
 import { PRICING_TABLE, DIFFICULTY_MULTIPLIERS, SUBSCRIPTIONS, SAAS_PLANS, priceFor } from './pricingEngine';
 import { buildPortfolio } from './portfolioEngine';
@@ -328,14 +330,14 @@ app.get('/api/status', (req: Request, res: Response) => {
 });
 
 // Shared post-fulfillment: margin snapshot → interest-profile routing → Discord.
-function dispatchSourcingAlert(
+async function dispatchSourcingAlert(
   scrapedProduct: any,
   tier: number,
   amountSol: number,
   signature: string,
   paymentMode: string
 ) {
-  const snapshot = compareProduct(scrapedProduct);
+  const snapshot = await compareProduct(scrapedProduct);
   const matches = snapshot
     ? routeOpportunity({
         productId: snapshot.productId,
@@ -1118,6 +1120,29 @@ app.get('/api/profiles', (_req: Request, res: Response) => {
 });
 
 /**
+ * Coupang Partners benchmarks — pull REAL category retail prices and inspect.
+ */
+app.post('/api/ingest/coupang-benchmarks', async (_req: Request, res: Response) => {
+  try {
+    const benches = await refreshCategoryBenchmarks();
+    return res.status(200).json({
+      status: benches.length > 0 ? 'success' : 'skipped (COUPANG keys not configured)',
+      categoriesRefreshed: benches.length,
+      benchmarks: benches
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/ingest/coupang-benchmarks', (_req: Request, res: Response) => {
+  return res.status(200).json({
+    coupangConfigured: isCoupangConfigured(),
+    benchmarks: listCategoryBenchmarks()
+  });
+});
+
+/**
  * Wallet balance (live devnet query). ?address=<base58> to check any wallet,
  * defaults to the merchant wallet.
  */
@@ -1334,5 +1359,7 @@ app.listen(PORT, '0.0.0.0', async () => {
     }
   });
   runComparatorSweep().then(() => evaluateRules('sweep')).catch(() => { /* warm-up best effort */ });
+  // Pull REAL Coupang category benchmarks at boot (no-op without keys)
+  refreshCategoryBenchmarks().catch(() => { /* best effort */ });
   console.log(`Pay.sh Data API Server (Agent B) running on http://0.0.0.0:${PORT}`);
 });

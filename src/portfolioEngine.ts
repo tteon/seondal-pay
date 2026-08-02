@@ -74,7 +74,7 @@ export async function buildPortfolio(input: {
   // 1. Score all products: snapshot + catalog category
   const scored: { p: any; snap: PriceSnapshot; category: string; moq: number }[] = [];
   for (const p of products) {
-    const snap = compareProduct(p);
+    const snap = await compareProduct(p);
     if (!snap || snap.roiPercent <= 0) continue;
     const meta = classifyTitle(p.title);
     scored.push({

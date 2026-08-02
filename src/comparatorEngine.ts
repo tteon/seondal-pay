@@ -13,23 +13,43 @@
  */
 import { queryProducts } from './db';
 import { logEvent, comparatorSweeps, comparatorMarginGauge } from './observability';
+import { isCoupangConfigured, searchProducts, CoupangProduct } from './coupangPartnersClient';
+import { benchmarkForProduct } from './coupangBenchmarkEngine';
 
 export interface PriceSnapshot {
   productId: string;
   title: string;
   capturedAt: string;
   chinaWholesaleUsd: number;
+  chinaWholesaleCny?: number;
   fxKrwPerUsd: number;
   intlShippingKrw: number;
   tariffKrw: number;
   landedCostKrw: number;
   coupangPriceKrw: number;
-  marginKrw: number;
-  roiPercent: number;
+  coupangFeeKrw: number;        // 판매 수수료 (10.8% of sale price)
+  coupangShippingFeeKrw: number; // 카테고리 가정 배송비
+  netRevenueKrw: number;         // coupangPrice − fee − shipping
+  marginKrw: number;             // netRevenue − landedCost
+  roiPercent: number;            // margin / landedCost × 100
+  coupangSource?: 'partners-api' | 'mock-benchmark';
+  coupangProductName?: string;
+  coupangProductUrl?: string;
 }
 
 const FX_KRW_PER_USD = parseFloat(process.env.FX_KRW_PER_USD || '1400');
+const FX_KRW_PER_CNY = parseFloat(process.env.FX_KRW_PER_CNY || '190');
+const COUPANG_FEE_RATE = parseFloat(process.env.COUPANG_FEE_RATE || '0.108'); // 판매가의 10.8%
 const MAX_SNAPSHOTS_PER_PRODUCT = 96; // 24h @ 15min interval
+
+/** Coupang shipping-fee assumption by category (카테고리별 상이 — 가정표). */
+function coupangShippingFeeKrw(category: string | undefined, weightGrm: number): number {
+  const c = (category || '').toLowerCase();
+  if (weightGrm > 3000) return 6000;            // 중량물 가정
+  if (c.includes('electronics') || c.includes('가전')) return 4000;
+  if (c.includes('furniture') || c.includes('홈인테리어')) return 5000;
+  return 3000;                                   // 기본 소형 상품
+}
 
 // In-memory margin curves: productId → snapshots (newest first)
 const marginCurves = new Map<string, PriceSnapshot[]>();
@@ -53,11 +73,57 @@ function estimateIntlShippingKrw(weightGrm: number): number {
   return Math.max(2000, Math.round(weightGrm * 7));
 }
 
-/** Coupang-side retail price. Mock: JSON-LD benchmark; swap with real API. */
-function fetchCoupangPriceKrw(product: any): number | undefined {
+/** Coupang-side retail price. Mock: JSON-LD benchmark (used as fallback). */
+function fetchMockBenchmarkKrw(product: any): number | undefined {
   const props: any[] = product.dataJsonLd?.additionalProperty || [];
   const bench = props.find((p) => p.name === 'Korean Benchmark Retail Price');
   return bench ? Number(bench.value) : undefined;
+}
+
+/** Extract a Korean search keyword from a (possibly mixed) product title. */
+function titleToKeyword(title: string): string {
+  const tokens = (title || '')
+    .replace(/[，、,.\-_/()[\]{}0-9a-zA-Z]+/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length >= 2);
+  return tokens.slice(0, 3).join(' ') || (title || '').slice(0, 10);
+}
+
+/**
+ * REAL Coupang retail price via Partners API — keyword search, then pick the
+ * median of the top results (robust against outliers). Falls back to the mock
+ * benchmark when the API is unconfigured or errors.
+ */
+export async function fetchRealCoupangPrice(
+  product: any
+): Promise<{ priceKrw: number; source: 'partners-api' | 'mock-benchmark'; matched?: CoupangProduct } | undefined> {
+  if (isCoupangConfigured()) {
+    try {
+      // 1) per-product keyword search (most specific)
+      const keyword = titleToKeyword(product.title || '');
+      const results = await searchProducts(keyword, 5);
+      if (results.length > 0) {
+        const prices = results.map((r) => r.productPrice).sort((a, b) => a - b);
+        const median = prices[Math.floor(prices.length / 2)];
+        return { priceKrw: median, source: 'partners-api', matched: results[Math.floor(results.length / 2)] };
+      }
+      // 2) category-level real benchmark (median of best-sellers)
+      const bench = benchmarkForProduct(product);
+      if (bench) {
+        return {
+          priceKrw: bench.medianPriceKrw,
+          source: 'partners-api',
+          matched: bench.topItems[0]
+            ? { productName: `[${bench.categoryName} 베스트 중앙값]`, productPrice: bench.medianPriceKrw, productUrl: bench.topItems[0].productUrl, productId: 0, productImage: '' } as CoupangProduct
+            : undefined,
+        };
+      }
+    } catch (err: any) {
+      logEvent('warn', 'coupang.lookup_failed', { error: err.message, productId: product.productId });
+    }
+  }
+  const mock = fetchMockBenchmarkKrw(product);
+  return mock ? { priceKrw: mock, source: 'mock-benchmark' } : undefined;
 }
 
 function shippingWeightGrm(product: any): number {
@@ -66,32 +132,62 @@ function shippingWeightGrm(product: any): number {
   return w ? Number(w.value) : 300;
 }
 
-/** Compute one margin snapshot for a product. */
-export function compareProduct(product: any): PriceSnapshot | null {
-  const coupangPriceKrw = fetchCoupangPriceKrw(product);
-  if (!coupangPriceKrw) return null;
+/** Wholesale base cost in KRW — handles USD and CNY(¥) price sources. */
+function wholesaleBaseKrw(product: any): { baseKrw: number; usd: number; cny?: number } {
+  const currency = (product.currency || 'USD').toUpperCase();
+  const price = Number(product.price) || 0;
+  if (currency === 'CNY' || currency === 'RMB' || currency === '¥') {
+    const baseKrw = Math.round(price * FX_KRW_PER_CNY);
+    return { baseKrw, usd: Math.round((baseKrw / FX_KRW_PER_USD) * 100) / 100, cny: price };
+  }
+  return { baseKrw: Math.round(price * FX_KRW_PER_USD), usd: price };
+}
 
-  const wholesaleUsd = Number(product.price) || 0;
-  const baseKrw = Math.round(wholesaleUsd * FX_KRW_PER_USD);
-  const intlShippingKrw = estimateIntlShippingKrw(shippingWeightGrm(product));
+function buildSnapshot(product: any, priceKrw: number, source: 'partners-api' | 'mock-benchmark', matched?: CoupangProduct): PriceSnapshot {
+  const { baseKrw, usd, cny } = wholesaleBaseKrw(product);
+  const weight = shippingWeightGrm(product);
+  const intlShippingKrw = estimateIntlShippingKrw(weight);
   const tariffKrw = estimateTariffKrw(product.dataJsonLd?.category, baseKrw);
   const landedCostKrw = baseKrw + intlShippingKrw + tariffKrw;
-  const marginKrw = coupangPriceKrw - landedCostKrw;
+  // 쿠팡 측 순수익: 판매가 − 수수료(10.8%) − 카테고리 배송비(가정)
+  const coupangFeeKrw = Math.round(priceKrw * COUPANG_FEE_RATE);
+  const shipFee = coupangShippingFeeKrw(product.dataJsonLd?.category, weight);
+  const netRevenueKrw = priceKrw - coupangFeeKrw - shipFee;
+  const marginKrw = netRevenueKrw - landedCostKrw;
   const roiPercent = landedCostKrw > 0 ? (marginKrw / landedCostKrw) * 100 : 0;
-
   return {
     productId: product.productId,
     title: product.title,
     capturedAt: new Date().toISOString(),
-    chinaWholesaleUsd: wholesaleUsd,
+    chinaWholesaleUsd: usd,
+    chinaWholesaleCny: cny,
     fxKrwPerUsd: FX_KRW_PER_USD,
     intlShippingKrw,
     tariffKrw,
     landedCostKrw,
-    coupangPriceKrw,
+    coupangPriceKrw: priceKrw,
+    coupangFeeKrw,
+    coupangShippingFeeKrw: shipFee,
+    netRevenueKrw,
     marginKrw,
     roiPercent: Math.round(roiPercent * 10) / 10,
+    coupangSource: source,
+    coupangProductName: matched?.productName,
+    coupangProductUrl: matched?.productUrl,
   };
+}
+
+/** Compute one margin snapshot for a product (real Coupang price when configured). */
+export async function compareProduct(product: any): Promise<PriceSnapshot | null> {
+  const lookup = await fetchRealCoupangPrice(product);
+  if (!lookup) return null;
+  return buildSnapshot(product, lookup.priceKrw, lookup.source, lookup.matched);
+}
+
+/** Synchronous fallback (mock benchmark only) for legacy call sites. */
+export function compareProductSync(product: any): PriceSnapshot | null {
+  const price = fetchMockBenchmarkKrw(product);
+  return price ? buildSnapshot(product, price, 'mock-benchmark') : null;
 }
 
 /** Run one sweep over all known products; returns new snapshots. */
@@ -100,7 +196,7 @@ export async function runComparatorSweep(): Promise<PriceSnapshot[]> {
   const snapshots: PriceSnapshot[] = [];
 
   for (const product of products) {
-    const snap = compareProduct(product);
+    const snap = await compareProduct(product);
     if (!snap) continue;
     const curve = marginCurves.get(snap.productId) || [];
     curve.unshift(snap);

@@ -99,7 +99,7 @@ export async function buildRecommendations(profile: OnboardingProfile): Promise<
   const excluded: { productId: string; reason: string }[] = [];
 
   for (const p of products) {
-    const snap = compareProduct(p);
+    const snap = await compareProduct(p);
     if (!snap) {
       excluded.push({ productId: p.productId, reason: '마진 데이터 부족 (벤치마크가 없음)' });
       continue;

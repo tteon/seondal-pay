@@ -127,13 +127,14 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
 
   // 4. Comparator margin analysis
   t0 = Date.now();
-  const snap = compareProduct(candidate);
+  const snap = await compareProduct(candidate);
   if (snap) {
+    const srcLabel = snap.coupangSource === 'partners-api' ? 'Coupang Partners API 실측' : '벤치마크(합성)';
     steps.push({
       step: 4,
       key: 'comparator.margin',
-      title: '⚖️ 쿠팡↔1688 마진 분석',
-      detail: `랜디드코스트 ₩${snap.landedCostKrw.toLocaleString()} (도매+물류 ₩${snap.intlShippingKrw.toLocaleString()}+관세 ₩${snap.tariffKrw.toLocaleString()}) vs 쿠팡가 ₩${snap.coupangPriceKrw.toLocaleString()} → ROI ${snap.roiPercent}%`,
+      title: '⚖️ 쿠팡↔1688 순마진 분석',
+      detail: `랜디드코스트 ₩${snap.landedCostKrw.toLocaleString()} (도매+국제운송 ₩${snap.intlShippingKrw.toLocaleString()}+관세 ₩${snap.tariffKrw.toLocaleString()}) → 순수익 ₩${snap.netRevenueKrw.toLocaleString()} (쿠팡가 ₩${snap.coupangPriceKrw.toLocaleString()} [${srcLabel}] − 수수료 ₩${snap.coupangFeeKrw.toLocaleString()} − 배송 ₩${snap.coupangShippingFeeKrw.toLocaleString()}) → ROI ${snap.roiPercent}%`,
       data: snap,
       durationMs: Date.now() - t0,
     });
