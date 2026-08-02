@@ -51,6 +51,8 @@ import {
   SERVICE_VERSION
 } from './observability';
 import { alertHighValueSourcing, extractRoiSignals } from './discordAlerter';
+import { compareProduct, runComparatorSweep, getLatestSnapshots, getMarginCurve, startComparatorLoop } from './comparatorEngine';
+import { routeOpportunity, listProfiles } from './interestProfileEngine';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 // Using Solana Devnet RPC
@@ -291,6 +293,38 @@ app.get('/api/status', (req: Request, res: Response) => {
   });
 });
 
+// Shared post-fulfillment: margin snapshot → interest-profile routing → Discord.
+function dispatchSourcingAlert(
+  scrapedProduct: any,
+  tier: number,
+  amountSol: number,
+  signature: string,
+  paymentMode: string
+) {
+  const snapshot = compareProduct(scrapedProduct);
+  const matches = snapshot
+    ? routeOpportunity({
+        productId: snapshot.productId,
+        title: snapshot.title,
+        category: scrapedProduct.dataJsonLd?.category,
+        roiPercent: snapshot.roiPercent,
+        marginKrw: snapshot.marginKrw,
+      })
+    : [];
+
+  alertHighValueSourcing({
+    productId: scrapedProduct.productId,
+    title: scrapedProduct.title,
+    priceUsd: scrapedProduct.price,
+    ...extractRoiSignals(scrapedProduct.dataJsonLd),
+    tier,
+    amountSol,
+    signature,
+    paymentMode,
+    matchedProfiles: matches.map((m) => ({ displayName: m.profile.displayName, score: m.score })),
+  }).catch(() => { /* alerting must never break fulfillment */ });
+}
+
 // Paid API Endpoint: Scrapes AliExpress/1688 details (HTTP 402 Flow)
 // Accepts BOTH the standard MPP credential (Authorization: Payment ...) and
 // the legacy custom headers (x-payment-signature / x-payment-reference).
@@ -374,17 +408,11 @@ app.post('/api/scrape', async (req: Request, res: Response) => {
       // Execute the scraper engine (saves to database and GCS automatically)
       const scrapedProduct = await scrapeProduct(url);
 
-      // Fire-and-forget: Discord alert when ROI clears the alert threshold
-      alertHighValueSourcing({
-        productId: scrapedProduct.productId,
-        title: scrapedProduct.title,
-        priceUsd: scrapedProduct.price,
-        ...extractRoiSignals(scrapedProduct.dataJsonLd),
-        tier: pending.tier,
-        amountSol: pending.amountSol,
-        signature,
-        paymentMode: mockTransactions.has(signature) ? 'Mock Sandbox' : 'Solana Devnet'
-      }).catch(() => { /* alerting must never break fulfillment */ });
+      // Post-fulfillment: comparator + profile routing + Discord (fire-and-forget)
+      dispatchSourcingAlert(
+        scrapedProduct, pending.tier, pending.amountSol, signature,
+        mockTransactions.has(signature) ? 'Mock Sandbox' : 'Solana Devnet'
+      );
 
       // Filter payload by purchased Tier
       const filteredDataJsonLd = filterPayloadByTier(scrapedProduct.dataJsonLd, pending.tier);
@@ -512,17 +540,11 @@ async function handleMppPaidRequest(
 
     const scrapedProduct = await scrapeProduct(url);
 
-    // Fire-and-forget: Discord alert when ROI clears the alert threshold
-    alertHighValueSourcing({
-      productId: scrapedProduct.productId,
-      title: scrapedProduct.title,
-      priceUsd: scrapedProduct.price,
-      ...extractRoiSignals(scrapedProduct.dataJsonLd),
-      tier: stored.tier,
-      amountSol: stored.amountSol,
-      signature,
-      paymentMode: mockTransactions.has(signature) ? 'Mock Sandbox' : 'Solana Devnet'
-    }).catch(() => { /* alerting must never break fulfillment */ });
+    // Post-fulfillment: comparator + profile routing + Discord (fire-and-forget)
+    dispatchSourcingAlert(
+      scrapedProduct, stored.tier, stored.amountSol, signature,
+      mockTransactions.has(signature) ? 'Mock Sandbox' : 'Solana Devnet'
+    );
 
     const filteredDataJsonLd = filterPayloadByTier(scrapedProduct.dataJsonLd, stored.tier);
 
@@ -1034,7 +1056,37 @@ app.get('/api/benchmark/empirical-experiment', (req: Request, res: Response) => 
   }
 });
 
+/**
+ * Coupang ↔ 1688 Comparator & Interest Profiles
+ */
+app.post('/api/comparator/sweep', async (_req: Request, res: Response) => {
+  try {
+    const snapshots = await runComparatorSweep();
+    return res.status(200).json({ status: 'success', snapshotsCreated: snapshots.length, snapshots });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/comparator/latest', (_req: Request, res: Response) => {
+  return res.status(200).json({ leaderboard: getLatestSnapshots() });
+});
+
+app.get('/api/comparator/curve/:productId', (req: Request, res: Response) => {
+  return res.status(200).json({
+    productId: req.params.productId,
+    curve: getMarginCurve(req.params.productId)
+  });
+});
+
+app.get('/api/profiles', (_req: Request, res: Response) => {
+  return res.status(200).json({ profiles: listProfiles() });
+});
+
 app.listen(PORT, '0.0.0.0', async () => {
   await initDb();
+  // Continuous Coupang ↔ 1688 margin comparison (default 15min; 0 disables)
+  startComparatorLoop(parseInt(process.env.COMPARATOR_INTERVAL_MS || '900000'));
+  runComparatorSweep().catch(() => { /* warm-up best effort */ });
   console.log(`Pay.sh Data API Server (Agent B) running on http://0.0.0.0:${PORT}`);
 });

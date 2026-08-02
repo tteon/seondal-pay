@@ -187,6 +187,29 @@ export const discordAlerts = new client.Counter({
   registers: [metricsRegistry],
 });
 
+/** Coupang ↔ 1688 comparator */
+export const comparatorSweeps = new client.Counter({
+  name: 'seondal_comparator_sweeps_total',
+  help: 'Comparator sweeps over the product catalog',
+  labelNames: ['result'] as const,
+  registers: [metricsRegistry],
+});
+
+export const comparatorMarginGauge = new client.Gauge({
+  name: 'seondal_comparator_roi_percent',
+  help: 'Latest computed ROI percent per product',
+  labelNames: ['productId'] as const,
+  registers: [metricsRegistry],
+});
+
+/** Interest-profile opportunity routing */
+export const profileMatches = new client.Counter({
+  name: 'seondal_profile_matches_total',
+  help: 'Opportunities routed to interest profiles',
+  labelNames: ['profile'] as const,
+  registers: [metricsRegistry],
+});
+
 /** Express middleware: measure every request */
 export function httpMetricsMiddleware(req: any, res: any, next: any) {
   const start = process.hrtime.bigint();

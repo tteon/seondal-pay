@@ -55,6 +55,8 @@ export interface SourcingAlertInput {
   signature: string;
   paymentMode: string; // 'mock' | 'devnet'
   traceId?: string;
+  /** Interest profiles this opportunity was routed to (if any) */
+  matchedProfiles?: { displayName: string; score: number }[];
 }
 
 /** Parse the scraper's JSON-LD enrichment into alert inputs. */
@@ -78,7 +80,9 @@ export function extractRoiSignals(dataJsonLd: any): {
  */
 export async function alertHighValueSourcing(input: SourcingAlertInput): Promise<boolean> {
   const roi = input.roiMarginPercent ?? 0;
-  if (roi < ROI_ALERT_MIN_PERCENT) return false;
+  const profileMatched = (input.matchedProfiles?.length ?? 0) > 0;
+  // Alert when the global ROI bar clears OR any interest profile claimed it
+  if (roi < ROI_ALERT_MIN_PERCENT && !profileMatched) return false;
 
   const traceId = input.traceId || trace.getActiveSpan()?.spanContext().traceId;
 
@@ -126,6 +130,15 @@ export async function alertHighValueSourcing(input: SourcingAlertInput): Promise
           value: `[solscan](https://solscan.io/tx/${input.signature}?cluster=devnet)`,
           inline: true,
         },
+        ...(profileMatched
+          ? [{
+              name: '🎯 매칭된 관심 프로파일',
+              value: input.matchedProfiles!
+                .map((p) => `**${p.displayName}** (score ${p.score})`)
+                .join('\n'),
+              inline: false,
+            }]
+          : []),
         {
           name: '🤖 OpenClaw Handoff Payload',
           value: '```json\n' + JSON.stringify(handoffPayload, null, 2) + '\n```',
