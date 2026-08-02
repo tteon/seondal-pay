@@ -49,35 +49,49 @@ export async function initDb() {
     return;
   }
 
-  try {
-    pool = new Pool(pgConfig);
-    // Test the connection
-    const client = await pool.connect();
-    console.log(`[Database] Successfully connected to PostgreSQL.`);
-    
-    // Create the products table if it doesn't exist
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS products (
-        product_id VARCHAR(255) PRIMARY KEY,
-        title TEXT NOT NULL,
-        price NUMERIC(10, 2) NOT NULL,
-        currency VARCHAR(10) DEFAULT 'USD',
-        image_url TEXT,
-        source_url TEXT,
-        scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        raw_html_gcs_url TEXT,
-        data_json_ld JSONB
-      );
-      ALTER TABLE products ADD COLUMN IF NOT EXISTS data_json_ld JSONB;
-      CREATE INDEX IF NOT EXISTS idx_products_json_ld ON products USING gin (data_json_ld);
-    `);
-    client.release();
-  } catch (err: any) {
-    console.log(`[Database Warning] Failed to connect to PostgreSQL: ${err.message}`);
-    console.log(`👉 Falling back to Mock PostgreSQL mode! (Data will be stored in local JSON)`);
-    useMock = true;
-    initMockDb();
+  // Retry: the Cloud SQL Auth Proxy sidecar may need a few seconds to start
+  // listening — don't fall back to mock on the first refused connection.
+  const maxAttempts = 5;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      pool = new Pool(pgConfig);
+      // Test the connection
+      const client = await pool.connect();
+      console.log(`[Database] Successfully connected to PostgreSQL.`);
+
+      // Create the products table if it doesn't exist
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS products (
+          product_id VARCHAR(255) PRIMARY KEY,
+          title TEXT NOT NULL,
+          price NUMERIC(10, 2) NOT NULL,
+          currency VARCHAR(10) DEFAULT 'USD',
+          image_url TEXT,
+          source_url TEXT,
+          scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          raw_html_gcs_url TEXT,
+          data_json_ld JSONB
+        );
+        ALTER TABLE products ADD COLUMN IF NOT EXISTS data_json_ld JSONB;
+        CREATE INDEX IF NOT EXISTS idx_products_json_ld ON products USING gin (data_json_ld);
+      `);
+      client.release();
+      logEvent('info', 'db.connected', { backend: 'postgres', attempt });
+      return;
+    } catch (err: any) {
+      console.log(`[Database Warning] Connection attempt ${attempt}/${maxAttempts} failed: ${err.message}`);
+      try { if (pool) await pool.end(); } catch { /* ignore */ }
+      pool = null;
+      if (attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+    }
   }
+  console.log(`[Database Warning] Failed to connect to PostgreSQL after ${maxAttempts} attempts.`);
+  console.log(`👉 Falling back to Mock PostgreSQL mode! (Data will be stored in local JSON)`);
+  useMock = true;
+  initMockDb();
+  logEvent('error', 'db.connection_failed', { attempts: maxAttempts, fallback: 'mock' });
 }
 
 // Wrapper for queries
