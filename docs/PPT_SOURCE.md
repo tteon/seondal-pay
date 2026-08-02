@@ -277,6 +277,15 @@ Agent A(구매 에이전트)                Agent B(SEONDAL 서버)
 **합성 결론 (슬라이드 빅 넘버)**: `4.23× 오버헤드 × 0.19× 온톨로지 압축 ≈ 0.80×`
 → **온톨로지 압축 멀티에이전트가 원시 텍스트 단일 에이전트보다 저렴하면서 정확도 동등 이상** — Rule 2.1의 실험적 증명
 
+**실험 3 — 차별화: Typed Ontology vs naive RAG (200샘플, "그냥 RAG 쓰면 안 되나?")**
+| | 정확도 | 환각 | 프롬프트 토큰 | 비용 |
+|---|---|---|---|---|
+| naive RAG (chunk+lexical retrieve) | 88% | 11% | 124,431 | $0.606 |
+| **온톨로지 노드** | **100%** | **0%** | **43,985 (2.83× 절감)** | **$0.260 (−57%)** |
+
+- **메커니즘**: 노이즈 페이지에서 디스트랙터 청크(타 상품 스펙·추천 레일)가 진짜 스펙 청크보다 어휘 중첩이 높아 검색 경쟁을 이김 → RAG의 MOQ 정확도 60% 붕괴. "검색"은 노이즈를 구별 못하고, **타이핑은 처음부터 스키마 슬롯에 정답을 넣는다**
+- **차별화 한 줄**: 이커머스 노이즈 환경에서 온톨로지 타이핑은 naive RAG 대비 정확도 +12%p·환각 −11%p·비용 −57% (사전 등록 + 독립 재집계 검증)
+
 ### 라이브 증명
 - **실제 온체인 결제**: devnet tx [`5gHTNnaD…rfQaWZW`](https://explorer.solana.com/tx/5gHTNnaDWQTvhMZKEuR7ttjhr5jmhbyCHcsiR8dRFxBkh6un1HYVg1Vub38We8cikaKFtkvHj5dmHgtPhrfQaWZW?cluster=devnet) — 평가자가 직접 검증 가능
 - **Discord 알림 실수신**: 고ROI 감지 → OpenClaw 핸드오프 임베드 (클스터 발송, `result=ok` 계측)
