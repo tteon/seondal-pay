@@ -51,7 +51,7 @@ fi
 # Discord webhook secret for Alertmanager (infra alerts) — from .env or shell.
 # Discord webhooks expose a Slack-compatible endpoint by appending /slack.
 if [[ -z "${DISCORD_WEBHOOK_URL:-}" && -f "${REPO_ROOT}/.env" ]]; then
-  DISCORD_WEBHOOK_URL="$(grep -E '^DISCORD_WEBHOOK_URL=' "${REPO_ROOT}/.env" | cut -d= -f2- || true)"
+  DISCORD_WEBHOOK_URL="$(grep -E '^DISCORD_WEBHOOK_URL=' "${REPO_ROOT}/.env" | cut -d= -f2- | tr -d '"'"'" || true)"
 fi
 kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
 if [[ -n "${DISCORD_WEBHOOK_URL:-}" ]]; then
