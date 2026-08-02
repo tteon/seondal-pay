@@ -1,0 +1,10 @@
+{
+  "bindings": [
+    {
+      "role": "roles/secretmanager.secretAccessor",
+      "members": [
+        "serviceAccount:1064390008895-compute@developer.gserviceaccount.com"
+      ]
+    }
+  ]
+}

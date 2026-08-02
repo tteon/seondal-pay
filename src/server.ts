@@ -69,13 +69,41 @@ const connection = new Connection(RPC_URL, 'confirmed');
 const KEYPAIR_PATH = path.join(__dirname, '../merchant-keypair.json');
 
 // Load or generate Merchant Keypair
-let merchantKeypair: Keypair;
-if (fs.existsSync(KEYPAIR_PATH)) {
-  const secretKey = Uint8Array.from(JSON.parse(fs.readFileSync(KEYPAIR_PATH, 'utf-8')));
+let merchantKeypair!: Keypair;
+const candidatePaths = [
+  path.join(__dirname, '../merchant-keypair.json'),
+  path.join(__dirname, './merchant-keypair.json'),
+  '/app/merchant-keypair.json',
+  '/app/dist/merchant-keypair.json',
+  '/merchant-keypair.json'
+];
+
+let loadedPath: string | null = null;
+if (process.env.MERCHANT_KEYPAIR_JSON) {
+  const secretKey = Uint8Array.from(JSON.parse(process.env.MERCHANT_KEYPAIR_JSON));
   merchantKeypair = Keypair.fromSecretKey(secretKey);
+  console.log(`Loaded merchant keypair from MERCHANT_KEYPAIR_JSON env var`);
 } else {
-  merchantKeypair = Keypair.generate();
-  fs.writeFileSync(KEYPAIR_PATH, JSON.stringify(Array.from(merchantKeypair.secretKey)), 'utf-8');
+  for (const p of candidatePaths) {
+    if (fs.existsSync(p)) {
+      try {
+        const secretKey = Uint8Array.from(JSON.parse(fs.readFileSync(p, 'utf-8')));
+        merchantKeypair = Keypair.fromSecretKey(secretKey);
+        loadedPath = p;
+        console.log(`Loaded merchant keypair from ${p}`);
+        break;
+      } catch (err) {
+        console.error(`Failed reading keypair from ${p}:`, err);
+      }
+    }
+  }
+  if (!loadedPath) {
+    console.log(`No merchant-keypair.json found in candidate paths. Generating fresh keypair.`);
+    merchantKeypair = Keypair.generate();
+    try {
+      fs.writeFileSync(candidatePaths[0], JSON.stringify(Array.from(merchantKeypair.secretKey)), 'utf-8');
+    } catch (_) {}
+  }
 }
 
 const merchantPublicKey = merchantKeypair.publicKey;
