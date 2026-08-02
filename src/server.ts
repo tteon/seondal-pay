@@ -53,6 +53,7 @@ import {
 import { alertHighValueSourcing, extractRoiSignals } from './discordAlerter';
 import { compareProduct, runComparatorSweep, getLatestSnapshots, getMarginCurve, startComparatorLoop } from './comparatorEngine';
 import { routeOpportunity, listProfiles } from './interestProfileEngine';
+import { runLiveSourcingPipeline } from './liveSourcingPipeline';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 // Using Solana Devnet RPC
@@ -1081,6 +1082,23 @@ app.get('/api/comparator/curve/:productId', (req: Request, res: Response) => {
 
 app.get('/api/profiles', (_req: Request, res: Response) => {
   return res.status(200).json({ profiles: listProfiles() });
+});
+
+/**
+ * Live Sourcing Pipeline (demo chat backend): runs the REAL platform stages
+ * (catalog → MPP challenge → ontology typing → comparator → profile routing
+ * → SaaS report) and returns them as ordered steps for the chat UI.
+ */
+app.post('/api/demo/live-sourcing', async (req: Request, res: Response) => {
+  const { query, tier } = req.body;
+  const q = query || '유아 롬퍼';
+  try {
+    const result = await runLiveSourcingPipeline(q, tier ? parseInt(tier) : 3);
+    logEvent('info', 'demo.live_sourcing', { query: q, steps: result.steps.length, hasReport: !!result.report });
+    return res.status(200).json(result);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
 });
 
 app.listen(PORT, '0.0.0.0', async () => {

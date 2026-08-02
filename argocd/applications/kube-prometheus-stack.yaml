@@ -37,6 +37,22 @@ spec:
           enabled: false
         nodeExporter:
           enabled: false
+        # Autopilot: kubelet/node rules can't work (no kubelet scraping) and
+        # overcommit alerts are for self-managed clusters — keep only our
+        # custom seondal-pay-alerts PrometheusRule.
+        defaultRules:
+          rules:
+            kubelet: false
+            node: false
+            nodeNetwork: false
+            nodeFilesystem: false
+            kubernetesApps: false
+            kubernetesResources: false
+            kubernetesStorage: false
+            kubernetesSystem: false
+            kubeScheduler: false
+            kubeStateMetrics: false
+            network: false
         prometheus:
           prometheusSpec:
             retention: 7d
