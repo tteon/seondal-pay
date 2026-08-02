@@ -154,6 +154,12 @@ const USER_REGISTRY: Record<string, { passwordHash: string; role: string; wallet
     passwordHash: 'admin',
     role: 'SELLER_PRO',
     wallet: 'De6su1LcyGUmekuK2AGmGDnCwZSbeSfWoK33JFnwSkyF'
+  },
+  // Hackathon evaluator account (read-mostly demo access)
+  'evaluator@seondal.demo': {
+    passwordHash: 'seondal2026!',
+    role: 'EVALUATOR',
+    wallet: 'De6su1LcyGUmekuK2AGmGDnCwZSbeSfWoK33JFnwSkyF'
   }
 };
 
