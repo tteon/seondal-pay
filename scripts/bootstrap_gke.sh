@@ -37,7 +37,11 @@ else
 fi
 # Optional runtime env overrides (DB_HOST, DB_USER, DB_PASSWORD, KIMI_API_KEY, ...)
 if [[ -f "${REPO_ROOT}/.env" ]]; then
-  SECRET_ARGS+=(--from-env-file="${REPO_ROOT}/.env")
+  while IFS='=' read -r key val || [[ -n "$key" ]]; do
+    [[ -z "$key" || "$key" =~ ^# ]] && continue
+    val="$(echo "$val" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")"
+    SECRET_ARGS+=(--from-literal="${key}=${val}")
+  done < "${REPO_ROOT}/.env"
   echo "  + .env"
 fi
 
