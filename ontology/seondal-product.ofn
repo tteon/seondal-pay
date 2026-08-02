@@ -1,7 +1,11 @@
 # SEONDAL Product Ontology — OWL source (ODK-managed)
 # Ontology IRI: http://seondal.ai/ontology/seondal-product.owl
 # Lifecycle: ODK (ROBOT reason QC in CI) → release artifacts consumed by runtime.
-# Version info follows ODK conventions: dated releases + semantic tagging.
+#
+# MODULE MAP
+#   M1. Core A2A nodes (schema.org-aligned)
+#   M2. China-Sourcing Domain Extension — concepts schema.org does NOT cover,
+#       each annotated with the problem definition it answers.
 
 Prefix(:=<http://seondal.ai/ontology/seondal-product#>)
 Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
@@ -14,17 +18,18 @@ Prefix(dcterms:=<http://purl.org/dc/terms/>)
 Ontology(<http://seondal.ai/ontology/seondal-product>
   <http://seondal.ai/ontology/seondal-product/2026-08-02>
   Annotation(dcterms:title "SEONDAL Product Sourcing Ontology")
-  Annotation(dcterms:description "Typed nodes for A2A e-commerce sourcing: product, circumstance, tariff compliance. Raw web text MUST be transformed into these nodes before sub-agent execution (AGENT.md Rule 2.1).")
-  Annotation(owl:versionInfo "2026-08-02")
+  Annotation(dcterms:description "Typed nodes for A2A e-commerce sourcing. PROBLEM DEFINITION: cross-border sellers face information asymmetry — 1688/Taobao wholesale facts (MOQ tiers, supplier trust, RCEP eligibility, tacit quality signals) are locked in noisy Chinese web text and have no schema.org representation. This ontology is the typed contract that (a) filters that noise before A2A handoff (AGENT.md Rule 2.1) and (b) makes China-sourcing decisions computable.")
+  Annotation(owl:versionInfo "2026-08-02 (M1 core + M2 china-sourcing extension)")
 
-  # ── Core classes ────────────────────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════
+  # M1. CORE A2A NODES (schema.org-aligned)
+  # ═══════════════════════════════════════════════════════════════
   Declaration(Class(:Product))
   SubClassOf(:Product schema:Product)
   AnnotationAssertion(rdfs:comment :Product "A sellable item, aligned with schema.org/Product.")
 
   Declaration(Class(:ProductOntologyNode))
-  SubClassOf(:ProductOntologyNode owl:Thing)
-  AnnotationAssertion(rdfs:comment :ProductOntologyNode "Typed, noise-filtered product knowledge node exchanged between agents.")
+  AnnotationAssertion(rdfs:comment :ProductOntologyNode "Typed, noise-filtered product knowledge node exchanged between agents (AGENT.md Rule 2.1: raw web text MUST NOT be passed directly).")
 
   Declaration(Class(:UserCircumstanceNode))
   AnnotationAssertion(rdfs:comment :UserCircumstanceNode "Seller circumstance: capital budget, stage (Early/Growth/Mature), interest profile (ROI bands, risk tolerance).")
@@ -33,14 +38,12 @@ Ontology(<http://seondal.ai/ontology/seondal-product>
   AnnotationAssertion(rdfs:comment :TariffComplianceNode "KC safety regulation + origin/tariff compliance facts for a product import decision.")
 
   Declaration(Class(:InterestProfile))
-  AnnotationAssertion(rdfs:comment :InterestProfile "Financial category of a seller: roiBands, minMarginKrw, riskTolerance.")
+  AnnotationAssertion(rdfs:comment :InterestProfile "Financial category of a seller: roiBands, minMarginKrw, riskTolerance. 'Category' here is a financial profile, not only a taxonomy.")
 
   Declaration(Class(:MarginSnapshot))
   AnnotationAssertion(rdfs:comment :MarginSnapshot "A point on the Coupang↔1688 margin curve produced by the comparator engine.")
 
-  # ── Object properties ───────────────────────────────────────────
   Declaration(ObjectProperty(:hasSourcingNode))
-  SubObjectPropertyOf(:hasSourcingNode owl:topObjectProperty)
   ObjectPropertyDomain(:hasSourcingNode :Product)
   ObjectPropertyRange(:hasSourcingNode :ProductOntologyNode)
 
@@ -62,7 +65,6 @@ Ontology(<http://seondal.ai/ontology/seondal-product>
   Declaration(ObjectProperty(:sameAsSynonym))
   AnnotationAssertion(rdfs:comment :sameAsSynonym "synonym relation between category terms (e.g., TV ~ Television).")
 
-  # ── Data properties ─────────────────────────────────────────────
   Declaration(DataProperty(:moq))
   SubDataPropertyOf(:moq schema:eligibleQuantity)
   DataPropertyDomain(:moq :ProductOntologyNode)
@@ -85,4 +87,157 @@ Ontology(<http://seondal.ai/ontology/seondal-product>
   Declaration(DataProperty(:kcCertificationRequired))
   DataPropertyDomain(:kcCertificationRequired :TariffComplianceNode)
   DataPropertyRange(:kcCertificationRequired xsd:boolean)
+
+  # ═══════════════════════════════════════════════════════════════
+  # M2. CHINA-SOURCING DOMAIN EXTENSION
+  #     Concepts schema.org does NOT model. Each carries its
+  #     problem definition (why it must exist for 1688 sourcing).
+  # ═══════════════════════════════════════════════════════════════
+
+  # ── M2.1 Supplier trust (공급처 신뢰) ──────────────────────────
+  # PROBLEM: schema.org has Organization/Brand but no factory-trust
+  # semantics. On 1688, the SAME product from two factories differs by
+  # 诚信通 years / 实力商家 status — the #1 fraud vector for new sellers.
+  Declaration(Class(:ChinaSupplierNode))
+  AnnotationAssertion(rdfs:comment :ChinaSupplierNode "A 1688/Taobao supplier entity. PROBLEM: identical listings differ only by factory trustworthiness; schema.org Organization cannot express marketplace trust signals.")
+
+  Declaration(Class(:SupplierTrustProfile))
+  AnnotationAssertion(rdfs:comment :SupplierTrustProfile "Trust signals attached to a ChinaSupplierNode.")
+
+  Declaration(DataProperty(:chengxintongYears))
+  DataPropertyDomain(:chengxintongYears :SupplierTrustProfile)
+  DataPropertyRange(:chengxintongYears xsd:integer)
+  AnnotationAssertion(rdfs:comment :chengxintongYears "诚信通(신뢰통) 가입 연수 — Alibaba's paid-trust membership age. Longer = lower fraud risk.")
+
+  Declaration(DataProperty(:isPowerMerchant))
+  DataPropertyDomain(:isPowerMerchant :SupplierTrustProfile)
+  DataPropertyRange(:isPowerMerchant xsd:boolean)
+  AnnotationAssertion(rdfs:comment :isPowerMerchant "实力商家(실력상가) 여부 — Alibaba-verified 'strong merchant' badge (factory audit passed).")
+
+  Declaration(DataProperty(:factoryVerifiedOnsite))
+  DataPropertyDomain(:factoryVerifiedOnsite :SupplierTrustProfile)
+  DataPropertyRange(:factoryVerifiedOnsite xsd:boolean)
+  AnnotationAssertion(rdfs:comment :factoryVerifiedOnsite "Actual on-site factory verification completed (vs. trading company masquerading as factory).")
+
+  Declaration(DataProperty(:supplierResponseRatePct))
+  DataPropertyDomain(:supplierResponseRatePct :SupplierTrustProfile)
+  DataPropertyRange(:supplierResponseRatePct xsd:decimal)
+
+  Declaration(ObjectProperty(:suppliedBy))
+  ObjectPropertyDomain(:suppliedBy :ProductOntologyNode)
+  ObjectPropertyRange(:suppliedBy :ChinaSupplierNode)
+
+  Declaration(ObjectProperty(:hasTrustProfile))
+  ObjectPropertyDomain(:hasTrustProfile :ChinaSupplierNode)
+  ObjectPropertyRange(:hasTrustProfile :SupplierTrustProfile)
+
+  # ── M2.2 MOQ price tiers (수량 구간 도매가) ────────────────────
+  # PROBLEM: 1688 pricing is inherently tiered (1~49개 $12.5 / 50개~ $10.6).
+  # schema.org priceSpecification can hold ONE price per spec; it lacks
+  # the semantic of a wholesale LADDER that drives margin planning.
+  Declaration(Class(:MoqPriceTier))
+  AnnotationAssertion(rdfs:comment :MoqPriceTier "One rung of the wholesale price ladder: {minQuantity, maxQuantity, unitPriceUsd}. PROBLEM: margin depends on which rung you buy at — schema.org has no ladder semantics.")
+
+  Declaration(DataProperty(:tierMinQuantity))
+  DataPropertyDomain(:tierMinQuantity :MoqPriceTier)
+  DataPropertyRange(:tierMinQuantity xsd:integer)
+
+  Declaration(DataProperty(:tierMaxQuantity))
+  DataPropertyDomain(:tierMaxQuantity :MoqPriceTier)
+  DataPropertyRange(:tierMaxQuantity xsd:integer)
+
+  Declaration(DataProperty(:tierUnitPriceUsd))
+  DataPropertyDomain(:tierUnitPriceUsd :MoqPriceTier)
+  DataPropertyRange(:tierUnitPriceUsd xsd:decimal)
+
+  Declaration(ObjectProperty(:hasPriceTier))
+  ObjectPropertyDomain(:hasPriceTier :ProductOntologyNode)
+  ObjectPropertyRange(:hasPriceTier :MoqPriceTier)
+
+  # ── M2.3 RCEP tariff preference (원산지증명 관세 특혜) ─────────
+  # PROBLEM: RCEP Form E can make duty 0%, flipping the landed-cost
+  # equation — but it depends on supplier's Certificate of Origin, a
+  # fact that lives nowhere in schema.org.
+  Declaration(Class(:RcepTariffPreference))
+  AnnotationAssertion(rdfs:comment :RcepTariffPreference "RCEP preferential-tariff eligibility for this product+supplier pair. PROBLEM: 8% duty vs 0% duty is decided by supplier's CO(Form E) availability, not by the product itself.")
+
+  Declaration(DataProperty(:rcepEligible))
+  DataPropertyDomain(:rcepEligible :RcepTariffPreference)
+  DataPropertyRange(:rcepEligible xsd:boolean)
+
+  Declaration(DataProperty(:certificateOfOriginType))
+  DataPropertyDomain(:certificateOfOriginType :RcepTariffPreference)
+  AnnotationAssertion(rdfs:comment :certificateOfOriginType "e.g. 'Form E' — the CO document type the supplier can issue.")
+
+  Declaration(ObjectProperty(:hasRcepPreference))
+  ObjectPropertyDomain(:hasRcepPreference :ProductOntologyNode)
+  ObjectPropertyRange(:hasRcepPreference :RcepTariffPreference)
+
+  # ── M2.4 Tacit quality metrics (암묵 품질 지표) ────────────────
+  # PROBLEM: a seller's real question is 'will this SELL and will it
+  # come back as returns?' — tacit signals (thumbnail appeal, margin
+  # density, return risk, trend velocity) exist nowhere in schema.org.
+  # These are the 5 metrics from AGENT.md Rule 2.2 (Kimi's role).
+  Declaration(Class(:TacitQualityMetrics))
+  AnnotationAssertion(rdfs:comment :TacitQualityMetrics "Tacit sourcing quality scores (0-10) distilled by the classifier agent. PROBLEM: purchase decisions hinge on tacit signals absent from any public schema.")
+
+  Declaration(DataProperty(:visualThumbnailAppeal))
+  DataPropertyDomain(:visualThumbnailAppeal :TacitQualityMetrics)
+  DataPropertyRange(:visualThumbnailAppeal xsd:decimal)
+  AnnotationAssertion(rdfs:comment :visualThumbnailAppeal "Thumbnail CTR potential in Korean mobile commerce context (0-10).")
+
+  Declaration(DataProperty(:marginDensityScore))
+  DataPropertyDomain(:marginDensityScore :TacitQualityMetrics)
+  DataPropertyRange(:marginDensityScore xsd:decimal)
+  AnnotationAssertion(rdfs:comment :marginDensityScore "Margin per unit weight/volume — high-density items win on air freight (0-10).")
+
+  Declaration(DataProperty(:returnRiskScore))
+  DataPropertyDomain(:returnRiskScore :TacitQualityMetrics)
+  DataPropertyRange(:returnRiskScore xsd:decimal)
+  AnnotationAssertion(rdfs:comment :returnRiskScore "Expected return/exchange propensity (0-10, higher = riskier). Feeds InterestProfile.riskTolerance matching.")
+
+  Declaration(DataProperty(:trendVelocityScore))
+  DataPropertyDomain(:trendVelocityScore :TacitQualityMetrics)
+  DataPropertyRange(:trendVelocityScore xsd:decimal)
+  AnnotationAssertion(rdfs:comment :trendVelocityScore "How fast demand is rising/decaying (0-10) — from Douyin/Baidu trend signals.")
+
+  Declaration(ObjectProperty(:hasTacitMetrics))
+  ObjectPropertyDomain(:hasTacitMetrics :ProductOntologyNode)
+  ObjectPropertyRange(:hasTacitMetrics :TacitQualityMetrics)
+
+  # ── M2.5 Trend signal provenance (트렌드 신호 출처) ────────────
+  # PROBLEM: 'this is hot on Douyin' must be a first-class, queryable
+  # fact with provenance, not a sentence buried in a report.
+  Declaration(Class(:TrendSignal))
+  AnnotationAssertion(rdfs:comment :TrendSignal "A provenance-tagged external demand signal (Baidu index, Douyin velocity) for a product category.")
+
+  Declaration(DataProperty(:baiduIndexScore))
+  DataPropertyDomain(:baiduIndexScore :TrendSignal)
+  DataPropertyRange(:baiduIndexScore xsd:decimal)
+
+  Declaration(DataProperty(:douyinVelocityScore))
+  DataPropertyDomain(:douyinVelocityScore :TrendSignal)
+  DataPropertyRange(:douyinVelocityScore xsd:decimal)
+
+  Declaration(DataProperty(:signalCapturedAt))
+  DataPropertyDomain(:signalCapturedAt :TrendSignal)
+  DataPropertyRange(:signalCapturedAt xsd:dateTime)
+
+  Declaration(ObjectProperty(:hasTrendSignal))
+  ObjectPropertyDomain(:hasTrendSignal :ProductOntologyNode)
+  ObjectPropertyRange(:hasTrendSignal :TrendSignal)
+
+  # ── M2.6 Dropshipping capability (一件代发) ────────────────────
+  # PROBLEM: 초기 셀러(자본 300만원)의 생존 조건 = 재고 없는 판매.
+  # 一件代发 availability changes the entire business case; schema.org
+  # has no representation of fulfillment-model capability.
+  Declaration(DataProperty(:supportsDropshipping))
+  DataPropertyDomain(:supportsDropshipping :ChinaSupplierNode)
+  DataPropertyRange(:supportsDropshipping xsd:boolean)
+  AnnotationAssertion(rdfs:comment :supportsDropshipping "一件代发(1건 대리발송) 지원 여부 — 재고 없는 판매 가능 조건. Early-stage seller survival constraint.")
+
+  Declaration(DataProperty(:supportsMixedBatch))
+  DataPropertyDomain(:supportsMixedBatch :ChinaSupplierNode)
+  DataPropertyRange(:supportsMixedBatch xsd:boolean)
+  AnnotationAssertion(rdfs:comment :supportsMixedBatch "混批(혼합 배치) 지원 여부 — 여러 SKU를 MOQ 미만으로 섞어 주문 가능한가.")
 )
