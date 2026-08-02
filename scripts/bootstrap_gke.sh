@@ -48,6 +48,22 @@ else
   echo "  (no local secrets — skipping secret creation; mock backends will be used)"
 fi
 
+# Discord webhook secret for Alertmanager (infra alerts) — from .env or shell.
+# Discord webhooks expose a Slack-compatible endpoint by appending /slack.
+if [[ -z "${DISCORD_WEBHOOK_URL:-}" && -f "${REPO_ROOT}/.env" ]]; then
+  DISCORD_WEBHOOK_URL="$(grep -E '^DISCORD_WEBHOOK_URL=' "${REPO_ROOT}/.env" | cut -d= -f2- || true)"
+fi
+kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+if [[ -n "${DISCORD_WEBHOOK_URL:-}" ]]; then
+  SLACK_COMPAT_URL="${DISCORD_WEBHOOK_URL%/}/slack"
+  kubectl create secret generic alert-discord-webhook \
+    --from-literal=discord-webhook-url="${SLACK_COMPAT_URL}" \
+    --namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+  echo "  + alert-discord-webhook (Alertmanager → Discord, /slack-compatible)"
+else
+  echo "  - DISCORD_WEBHOOK_URL not set — Alertmanager will have no receiver (app-level Discord alerts also disabled)"
+fi
+
 echo "=== [3/4] Installing ArgoCD ==="
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml

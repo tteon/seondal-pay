@@ -179,6 +179,14 @@ export const gcsUploads = new client.Counter({
   registers: [metricsRegistry],
 });
 
+/** Discord alert deliveries */
+export const discordAlerts = new client.Counter({
+  name: 'seondal_discord_alerts_total',
+  help: 'Discord alert webhook deliveries',
+  labelNames: ['kind', 'result'] as const,
+  registers: [metricsRegistry],
+});
+
 /** Express middleware: measure every request */
 export function httpMetricsMiddleware(req: any, res: any, next: any) {
   const start = process.hrtime.bigint();

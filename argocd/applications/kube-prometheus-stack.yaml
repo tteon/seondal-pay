@@ -18,6 +18,32 @@ spec:
         prometheus:
           prometheusSpec:
             retention: 7d
+        alertmanager:
+          # Discord via its Slack-compatible webhook endpoint.
+          # The URL lives in Secret alert-discord-webhook/discord-webhook-url
+          # (created by scripts/bootstrap_gke.sh — never committed).
+          alertmanagerSpec:
+            secrets:
+              - alert-discord-webhook
+          config:
+            route:
+              receiver: discord
+              group_by: ['alertname', 'severity', 'namespace']
+              group_wait: 30s
+              group_interval: 5m
+              repeat_interval: 4h
+            receivers:
+              - name: discord
+                slack_configs:
+                  - api_url_file: /etc/alertmanager/secrets/alert-discord-webhook/discord-webhook-url
+                    channel: '#seondal-alerts'
+                    username: 'SEONDAL Alertmanager'
+                    icon_emoji: ':rotating_light:'
+                    title: '[{{ .CommonLabels.severity | toUpper }}] {{ .CommonLabels.alertname }}'
+                    text: >-
+                      {{ range .Alerts }}*{{ .Annotations.summary }}*
+                      {{ .Annotations.description }}
+                      {{ end }}
         grafana:
           adminPassword: seondal-admin   # demo credential — rotate in production
           service:

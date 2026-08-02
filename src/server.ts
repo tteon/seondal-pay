@@ -50,6 +50,7 @@ import {
   paymentRevenueSol,
   SERVICE_VERSION
 } from './observability';
+import { alertHighValueSourcing, extractRoiSignals } from './discordAlerter';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 // Using Solana Devnet RPC
@@ -373,6 +374,18 @@ app.post('/api/scrape', async (req: Request, res: Response) => {
       // Execute the scraper engine (saves to database and GCS automatically)
       const scrapedProduct = await scrapeProduct(url);
 
+      // Fire-and-forget: Discord alert when ROI clears the alert threshold
+      alertHighValueSourcing({
+        productId: scrapedProduct.productId,
+        title: scrapedProduct.title,
+        priceUsd: scrapedProduct.price,
+        ...extractRoiSignals(scrapedProduct.dataJsonLd),
+        tier: pending.tier,
+        amountSol: pending.amountSol,
+        signature,
+        paymentMode: mockTransactions.has(signature) ? 'Mock Sandbox' : 'Solana Devnet'
+      }).catch(() => { /* alerting must never break fulfillment */ });
+
       // Filter payload by purchased Tier
       const filteredDataJsonLd = filterPayloadByTier(scrapedProduct.dataJsonLd, pending.tier);
 
@@ -498,6 +511,19 @@ async function handleMppPaidRequest(
     console.log(`[Agent B][MPP] Payment verified! Executing e-commerce scraping...`);
 
     const scrapedProduct = await scrapeProduct(url);
+
+    // Fire-and-forget: Discord alert when ROI clears the alert threshold
+    alertHighValueSourcing({
+      productId: scrapedProduct.productId,
+      title: scrapedProduct.title,
+      priceUsd: scrapedProduct.price,
+      ...extractRoiSignals(scrapedProduct.dataJsonLd),
+      tier: stored.tier,
+      amountSol: stored.amountSol,
+      signature,
+      paymentMode: mockTransactions.has(signature) ? 'Mock Sandbox' : 'Solana Devnet'
+    }).catch(() => { /* alerting must never break fulfillment */ });
+
     const filteredDataJsonLd = filterPayloadByTier(scrapedProduct.dataJsonLd, stored.tier);
 
     // MPP §11.6 receipt

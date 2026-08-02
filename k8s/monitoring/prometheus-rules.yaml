@@ -1,0 +1,85 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: seondal-pay-alerts
+  namespace: monitoring
+  labels:
+    app: seondal-pay
+    # kube-prometheus-stack selects rules carrying its release label
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: seondal-pay.availability
+      rules:
+        - alert: SeondalPayDown
+          expr: up{namespace="seondal"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "seondal-pay target is DOWN"
+            description: "Prometheus cannot scrape seondal-pay /metrics for >2m (pod crash or service broken)."
+        - alert: SeondalPayHighErrorRate
+          expr: |
+            sum(rate(seondal_http_request_duration_seconds_count{status_code=~"5.."}[5m]))
+              /
+            sum(rate(seondal_http_request_duration_seconds_count[5m])) > 0.05
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "seondal-pay 5xx rate above 5%"
+            description: "More than 5% of HTTP requests are failing over the last 5m."
+    - name: seondal-pay.payments
+      rules:
+        - alert: SeondalPaymentVerificationFailureSpike
+          expr: |
+            sum(rate(seondal_payment_verifications_total{result="failed"}[10m])) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Payment verification failures spiking"
+            description: "On-chain verification is failing repeatedly — check Solana devnet reachability and challenge issuance."
+        - alert: SeondalReplayStorm
+          expr: |
+            sum(rate(seondal_payment_replay_rejections_total[10m])) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Signature replay storm detected"
+            description: "Consumed-signature replays arriving at an abnormal rate — possible double-spend probing."
+        - alert: SeondalChallengeExpiryHigh
+          expr: |
+            rate(seondal_payment_challenges_expired_total[15m])
+              /
+            rate(seondal_payment_challenges_issued_total[15m]) > 0.5
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Over 50% of payment challenges expire unused"
+            description: "Buyers are not completing payment within TTL — check client UX or TTL length."
+    - name: seondal-pay.pipeline
+      rules:
+        - alert: SeondalScrapeFallbackDominant
+          expr: |
+            sum(rate(seondal_scrape_total{outcome="fallback"}[15m]))
+              /
+            sum(rate(seondal_scrape_total[15m])) > 0.8
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Anti-bot fallback dominates scraping"
+            description: "Over 80% of scrapes hit the fallback generator for 15m — crawling quality degraded."
+        - alert: SeondalDiscordAlertFailing
+          expr: |
+            sum(rate(seondal_discord_alerts_total{result="error"}[15m])) > 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Discord alert delivery failing"
+            description: "Webhook posts are erroring — check DISCORD_WEBHOOK_URL secret."
