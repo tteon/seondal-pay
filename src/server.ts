@@ -54,6 +54,8 @@ import { alertHighValueSourcing, extractRoiSignals, isDiscordEnabled } from './d
 import { compareProduct, runComparatorSweep, getLatestSnapshots, getMarginCurve, startComparatorLoop } from './comparatorEngine';
 import { routeOpportunity, listProfiles } from './interestProfileEngine';
 import { runLiveSourcingPipeline } from './liveSourcingPipeline';
+import { createOnboardingProfile, getProfile, buildRecommendations } from './onboardingEngine';
+import { PRICING_TABLE, DIFFICULTY_MULTIPLIERS, SUBSCRIPTIONS, priceFor } from './pricingEngine';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 // Using Solana Devnet RPC
@@ -1180,6 +1182,52 @@ app.post('/api/demo/live-sourcing', async (req: Request, res: Response) => {
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
+});
+
+/**
+ * Cold-start onboarding: capture capital/level/wallet → budget-feasible
+ * product recommendations.
+ */
+app.post('/api/onboarding', async (req: Request, res: Response) => {
+  const { userId, displayName, capitalKrw, level, walletAddress } = req.body;
+  if (!userId || !capitalKrw || !walletAddress) {
+    return res.status(400).json({ error: 'userId, capitalKrw, walletAddress are required' });
+  }
+  const lvl = ['beginner', 'growth', 'mature'].includes(level) ? level : 'beginner';
+  try {
+    const result = await createOnboardingProfile({ userId, displayName, capitalKrw: Number(capitalKrw), level: lvl, walletAddress });
+    return res.status(201).json(result);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/onboarding/:userId', async (req: Request, res: Response) => {
+  const profile = getProfile(req.params.userId);
+  if (!profile) return res.status(404).json({ error: 'profile not found' });
+  try {
+    const result = await buildRecommendations(profile);
+    return res.status(200).json(result);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Pricing table with unit economics (measured cost → retail price → margin).
+ * ?tier=3&difficulty=deep for a computed quote.
+ */
+app.get('/api/pricing', (req: Request, res: Response) => {
+  const tierNum = req.query.tier ? parseInt(req.query.tier as string) : undefined;
+  const difficulty = (req.query.difficulty as any) || 'simple';
+  const quote = tierNum ? priceFor(tierNum, difficulty) : null;
+  return res.status(200).json({
+    pricing: PRICING_TABLE,
+    difficultyMultipliers: DIFFICULTY_MULTIPLIERS,
+    subscriptions: SUBSCRIPTIONS,
+    quote,
+    note: 'Costs measured from Kimi K3 experiment usage; prices target ≥80% gross margin per tier.'
+  });
 });
 
 app.listen(PORT, '0.0.0.0', async () => {

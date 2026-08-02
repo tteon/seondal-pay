@@ -126,6 +126,25 @@
   </div>
 </div>
 
+<!-- ===================== ONBOARDING MODAL ===================== -->
+<div id="onboardView" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:50; place-items:center;">
+  <div class="login-card" style="width:460px">
+    <h1>👋 시작하기 — 프로필 설정</h1>
+    <p class="sub">가용 자본과 지갑을 연동하면, <b>실행 가능한 상품</b>부터 추천해드립니다.</p>
+    <div class="field"><label>가용 자본 (KRW)</label><input id="obCapital" type="number" value="3000000"></div>
+    <div class="field"><label>셀러 레벨</label>
+      <select id="obLevel" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:var(--surface-1);color:var(--ink-1)">
+        <option value="beginner">🌱 Beginner — 처음이에요</option>
+        <option value="growth">🌿 Growth — 몇 번 팔아봤어요</option>
+        <option value="mature">🌳 Mature — 전업/경험 많아요</option>
+      </select>
+    </div>
+    <div class="field"><label>Solana 지갑 주소 (devnet)</label><input id="obWallet" placeholder="예: De6su1LcyGUmek…"><p class="sub" style="margin:6px 0 0">없으면 비워두세요 — 잔액 표시만 건너뜁니다.</p></div>
+    <button class="btn" onclick="doOnboard()">추천 받기</button>
+    <p class="sub" id="obMsg" style="margin:10px 0 0"></p>
+  </div>
+</div>
+
 <!-- ===================== APP ===================== -->
 <div id="appView">
   <header class="top">
@@ -135,6 +154,7 @@
       <span class="badge env" id="envBadge">…</span>
     </div>
     <div class="top-actions">
+      <button class="icon-btn" onclick="showOnboard()">🎯 내 프로필</button>
       <button class="icon-btn" onclick="toggleTheme()">🌓</button>
       <button class="icon-btn" onclick="loadAll()">↻ 새로고침</button>
       <button class="icon-btn" onclick="logout()">로그아웃</button>
@@ -148,14 +168,14 @@
       <div class="foot"><a id="tExplorer" target="_blank" href="#">explorer ↗</a> · <span id="tAddr">…</span></div>
     </div>
     <div class="tile">
+      <div class="label">👛 내 지갑 잔액</div>
+      <div class="value" id="tMyBalance">–<span class="unit">SOL</span></div>
+      <div class="foot"><a id="tMyExplorer" target="_blank" href="#">explorer ↗</a> · <span id="tMyAddr">온보에서 연동</span></div>
+    </div>
+    <div class="tile">
       <div class="label">💰 검증된 결제 매출</div>
       <div class="value" id="tRevenue">–<span class="unit">SOL</span></div>
       <div class="foot">게이트웨이 누적 (Tier 1/2/3)</div>
-    </div>
-    <div class="tile">
-      <div class="label">⏳ 활성 결제 챌린지</div>
-      <div class="value" id="tChallenges">–</div>
-      <div class="foot">402 발행 후 미정산 (TTL 300s)</div>
     </div>
     <div class="tile">
       <div class="label">✅ 처리된 결제</div>
@@ -163,6 +183,13 @@
       <div class="foot">온체인 검증 완료 서명 수</div>
     </div>
   </section>
+
+  <!-- onboarding recommendations -->
+  <div class="card" id="recCard" style="display:none; margin-bottom:14px">
+    <div class="card-h"><h2>🎯 내 자본으로 시작 가능한 추천 상품</h2><span class="hint" id="recHint"></span></div>
+    <div id="recGuidance" style="padding:12px 16px; font-size:12.5px; background:var(--series-1-soft); border-bottom:1px solid var(--line)"></div>
+    <div id="recList" style="padding:8px 0"></div>
+  </div>
 
   <div class="grid">
     <div>
@@ -180,7 +207,17 @@
     </div>
 
     <div class="card">
-      <div class="card-h"><h2>💬 라이브 소싱 에이전트</h2><span class="hint">실제 파이프라인 실행</span></div>
+      <div class="card-h">
+        <h2>💬 라이브 소싱 에이전트</h2>
+        <span class="hint">실제 파이프라인 실행</span>
+      </div>
+      <div id="tierRow" style="display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);align-items:center;flex-wrap:wrap">
+        <span style="font-size:11px;color:var(--ink-3);font-weight:600">TIER 선택:</span>
+        <button class="icon-btn tier-chip" data-tier="1" onclick="setTier(1)">T1 기본 <span class="tp"></span></button>
+        <button class="icon-btn tier-chip" data-tier="2" onclick="setTier(2)">T2 물류 <span class="tp"></span></button>
+        <button class="icon-btn tier-chip" data-tier="3" onclick="setTier(3)">T3 심층추론 <span class="tp"></span></button>
+        <span id="tierInfo" style="font-size:11px;color:var(--ink-3);margin-left:auto"></span>
+      </div>
       <div id="chatLog">
         <div class="msg agent"><div class="step-title">SEONDAL Agent</div>무엇을 소싱할까요? 예: <b>유아 롬퍼</b>, <b>실리콘 식기</b> — 카탈로그 스캔부터 MPP 결제 챌린지, 마진 분석, 프로파일 라우팅까지 실제로 실행해 보여드립니다.</div>
       </div>
@@ -204,6 +241,31 @@
 <script>
 const API = '';
 let chart = null;
+let currentTier = 3;
+let pricingData = null;
+
+async function loadPricing() {
+  try {
+    pricingData = await (await fetch(API + '/api/pricing')).json();
+    pricingData.pricing.forEach(t => {
+      const chip = document.querySelector(`.tier-chip[data-tier="${t.tier}"] .tp`);
+      if (chip) chip.textContent = `$${t.priceUsd}`;
+    });
+    setTier(currentTier);
+  } catch {}
+}
+function setTier(t) {
+  currentTier = t;
+  document.querySelectorAll('.tier-chip').forEach(c => {
+    c.style.borderColor = c.dataset.tier == t ? 'var(--series-1)' : 'var(--line)';
+    c.style.color = c.dataset.tier == t ? 'var(--series-1)' : 'var(--ink-2)';
+  });
+  if (pricingData) {
+    const p = pricingData.pricing.find(x => x.tier === t);
+    tierInfo.textContent = `${p.name} · $${p.priceUsd}/건 · 마진 ${p.marginPct}% · ${p.features[p.features.length-1]}`;
+    tierInfo.title = p.features.join(' | ');
+  }
+}
 
 function toggleTheme() {
   const b = document.body;
@@ -220,10 +282,70 @@ async function doLogin() {
     sessionStorage.setItem('seondal_session', d.token);
     sessionStorage.setItem('seondal_user', d.user.username);
     loginView.style.display = 'none'; appView.style.display = 'block';
-    loadAll(); setInterval(loadAll, 30000);
+    loadAll(); loadPricing(); setInterval(loadAll, 30000);
   } else { loginMsg.textContent = '로그인 실패'; }
 }
 function logout() { sessionStorage.clear(); location.reload(); }
+
+// ---------- onboarding ----------
+function showOnboard() { onboardView.style.display = 'grid'; }
+async function doOnboard() {
+  const wallet = obWallet.value.trim();
+  const userId = sessionStorage.getItem('seondal_user') || 'demo-user';
+  const r = await fetch(API + '/api/onboarding', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId,
+      capitalKrw: Number(obCapital.value) || 3000000,
+      level: obLevel.value,
+      walletAddress: wallet || 'unlinked'
+    })
+  });
+  if (!r.ok) { obMsg.textContent = '저장 실패: ' + r.status; return; }
+  const d = await r.json();
+  sessionStorage.setItem('seondal_profile', JSON.stringify(d.profile));
+  renderOnboarding(d);
+  onboardView.style.display = 'none';
+}
+async function loadOnboarding() {
+  const raw = sessionStorage.getItem('seondal_profile');
+  if (!raw) { showOnboard(); return; }
+  const p = JSON.parse(raw);
+  try {
+    const r = await fetch(API + '/api/onboarding/' + encodeURIComponent(p.userId));
+    if (r.ok) { renderOnboarding(await r.json()); return; }
+  } catch {}
+  showOnboard(); // profile lost (server restart) → re-onboard
+}
+function renderOnboarding(d) {
+  const p = d.profile;
+  recCard.style.display = 'block';
+  recHint.textContent = `${p.displayName} · ${p.level} · 자본 ₩${p.capitalKrw.toLocaleString()}`;
+  recGuidance.textContent = '💡 ' + d.guidance;
+  recList.innerHTML = d.recommendations.slice(0, 5).map(item => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);font-size:12.5px">
+      <div>
+        <b>${(item.title||'').slice(0,30)}</b>
+        <div style="color:var(--ink-3);font-size:11px;margin-top:2px">${item.reason}</div>
+      </div>
+      <div style="text-align:right;white-space:nowrap;margin-left:12px">
+        ${roiBadge(item.roiPercent)}
+        <div style="font-size:11px;color:var(--ink-3);margin-top:3px">초기주문 ₩${item.minOrderCostKrw.toLocaleString()} (자본의 ${item.capitalFitPct}%)</div>
+      </div>
+    </div>`).join('') || '<div style="padding:14px 16px;color:var(--ink-3);font-size:12px">자본 범위 내 상품이 아직 없습니다 — 결제 플로우로 카탈로그를 채워주세요.</div>';
+  // my wallet balance
+  if (p.walletAddress && p.walletAddress !== 'unlinked') {
+    fetch(API + '/api/wallet/balance?address=' + encodeURIComponent(p.walletAddress))
+      .then(r => r.json()).then(w => {
+        tMyBalance.innerHTML = (w.balanceSol ?? '–') + '<span class="unit">SOL</span>';
+        tMyAddr.textContent = w.address.slice(0,6) + '…' + w.address.slice(-4);
+        tMyExplorer.href = w.explorerUrl;
+      }).catch(() => { tMyAddr.textContent = '조회 실패'; });
+  } else {
+    tMyBalance.innerHTML = '–<span class="unit">SOL</span>';
+    tMyAddr.textContent = '미연동';
+  }
+}
 
 async function loadAll() {
   try {
@@ -244,6 +366,7 @@ async function loadAll() {
     renderChart(s.comparator.leaderboard);
     chart && (chart._lb = s.comparator.leaderboard);
   } catch (e) { console.error(e); }
+  loadOnboarding();
 }
 
 function roiBadge(roi) {
@@ -295,7 +418,7 @@ async function sendChat(e) {
   try {
     const r = await fetch(API + '/api/demo/live-sourcing', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: q, tier: 3 })
+      body: JSON.stringify({ query: q, tier: currentTier })
     });
     const d = await r.json();
     thinking.remove();
@@ -329,7 +452,7 @@ function addMsg(cls, html) {
 }
 if (sessionStorage.getItem('seondal_session')) {
   loginView.style.display = 'none'; appView.style.display = 'block';
-  loadAll(); setInterval(loadAll, 30000);
+  loadAll(); loadPricing(); setInterval(loadAll, 30000);
 }
 </script>
 </body>

@@ -1,0 +1,62 @@
+# CI for the AIgOps loop:
+#   agent commits → CI verifies (build + protocol tests) → image build
+#   → (deploy: ArgoCD watches this repo and syncs the cluster)
+# ArgoCD handles CD; this workflow is the CI gate that keeps main deployable.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: TypeScript build
+        run: npm run build
+
+      - name: Unit — devnet-path memo decoding
+        run: npx ts-node scripts/test_memo_decode.ts
+
+      - name: E2E — MPP protocol flows (mock sandbox, no external creds)
+        run: |
+          PORT=3999 MPP_CHALLENGE_TTL_SECONDS=6 npx ts-node src/server.ts &
+          SERVER_PID=$!
+          for i in $(seq 1 40); do
+            curl -sf http://localhost:3999/api/health > /dev/null && break
+            sleep 1
+          done
+          BASE_URL=http://localhost:3999 npx ts-node scripts/test_mpp_flow.ts
+          kill $SERVER_PID
+
+  docker:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image (no push — push requires registry credentials, see below)
+        run: docker build -t seondal-pay:ci .
+
+      # ── Deploy stage (enable after adding registry credentials) ──────────
+      # Option A (recommended): Workload Identity Federation — keyless.
+      #   1. gcloud: create WIF pool/provider for this repo
+      #   2. add to this workflow:
+      #        - uses: google-github-actions/auth@v2
+      #          with:
+      #            workload_identity_provider: <WIF_PROVIDER>
+      #            service_account: <CI_SA>@solana-503111.iam.gserviceaccount.com
+      #        - run: docker tag … && docker push us-central1-docker.pkg.dev/solana-503111/seondal/seondal-pay:${{ github.sha }}
+      #   3. bump k8s image tag (sha) and commit back ([skip ci]) → ArgoCD rolls
+      # Option B (quick): repository secret GCP_SA_KEY (Artifact Registry Writer만
+      # 부여한 전용 SA 권장 — sol-agent는 container.admin이라 범위가 넓음)
