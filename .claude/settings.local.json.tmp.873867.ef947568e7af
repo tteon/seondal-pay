@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(agy --help)",
+      "Bash(agy agent *)",
+      "Bash(agy -p \"Reply with one word: ready\")",
+      "WebSearch",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" --max-time 8 \"https://detail.1688.com\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" --max-time 12 https://seondal-pay-1064390008895.us-central1.run.app/api/health)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" --max-time 12 http://34.46.201.195/api/health)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" --max-time 12 http://34.171.84.231/api/health)",
+      "Bash(curl -sk -o /dev/null -w \"%{http_code}\" --max-time 12 https://136.116.158.227/)",
+      "Bash(curl -s --max-time 12 https://seondal-pay-1064390008895.us-central1.run.app/api/dashboard/summary)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d['products']['count'], 'products | revenue:', d['gateway']['totalRevenueSol'], 'SOL'\\)\")",
+      "Bash(/home/hadry/.local/bin/agy *)",
+      "Bash(curl -s --max-time 10 https://ifconfig.me)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'docs: ACCESS \\(live accounts\\) + TECHNICAL_DEEP_DIVE + OpenClaw task *)",
+      "Bash(git push *)",
+      "Bash(git *)"
+    ]
+  }
+}
