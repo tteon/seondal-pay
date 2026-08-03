@@ -17,6 +17,7 @@ import { queryProducts } from './db';
 import { issueChallenge, activeChallengeCount } from './mppEngine';
 import { compareProduct } from './comparatorEngine';
 import { routeOpportunity } from './interestProfileEngine';
+import { assessProductCompliance } from './complianceVerdictEngine';
 
 export interface PipelineStep {
   step: number;
@@ -125,7 +126,26 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
     durationMs: Date.now() - t0,
   });
 
-  // 4. Comparator margin analysis — the Coupang seller's estimated economics
+  // 3.5 Regulatory guardrail (deterministic 1차 검증 — LLM 환각 없이)
+  t0 = Date.now();
+  const compliance = assessProductCompliance(candidate.title || '', JSON.stringify(jsonLd));
+  steps.push({
+    step: 4,
+    key: 'compliance.guardrail',
+    title: '🛡️ 규제 1차 검증 (가드레일)',
+    detail: `${compliance.verdictLabel} — ${compliance.agenciesInvolved.length ? compliance.agenciesInvolved.join('+') : '관세청 표시사항만'} · 예상 비용 ₩${compliance.totalEstimatedCostKrw.min.toLocaleString()}~${compliance.totalEstimatedCostKrw.max.toLocaleString()} / ${compliance.totalEstimatedWeeks.min}~${compliance.totalEstimatedWeeks.max}주`,
+    data: {
+      verdict: compliance.verdict,
+      requirements: compliance.requirements.map((r) => ({
+        ruleId: r.ruleId, agency: r.agency, requirementName: r.requirementName,
+        severity: r.severity, cost: r.estimatedCostKrw, weeks: r.estimatedWeeks,
+      })),
+      reasoningChain: compliance.reasoningChain,
+    },
+    durationMs: Date.now() - t0,
+  });
+
+  // 5. Comparator margin analysis — the Coupang seller's estimated economics
   t0 = Date.now();
   const snap = await compareProduct(candidate);
   if (snap) {
@@ -133,7 +153,7 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
       snap.coupangSource === 'observed' ? '쿠팡 실측(수집)' :
       snap.coupangSource === 'partners-api' ? 'Coupang API 실측' : '벤치마크(합성)';
     steps.push({
-      step: 4,
+      step: 5,
       key: 'comparator.margin',
       title: '⚖️ 쿠팡 판매자 추정 경제 분석',
       detail: `이 상품을 파는 쿠팡 셀러의 추정 구조 — 판매가 ₩${snap.coupangPriceKrw.toLocaleString()} [${srcLabel}] − 수수료 ₩${snap.coupangFeeKrw.toLocaleString()} − 배송 ₩${snap.coupangShippingFeeKrw.toLocaleString()} = 순수익 ₩${snap.netRevenueKrw.toLocaleString()} · 원가(랜디드) ₩${snap.landedCostKrw.toLocaleString()} → 추정 마진 ₩${snap.marginKrw.toLocaleString()} (${snap.roiPercent}%)`,

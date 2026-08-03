@@ -84,7 +84,7 @@ export interface ComplianceVerdict {
 
 const KW = {
   children: ['儿童', '宝宝', '婴儿', '婴幼儿', '小孩', '유아', '어린이', '아동', '키즈', '아기', 'kids', 'baby', 'infant', 'toddler', '신생아', '초등'],
-  toy: ['玩具', '장난감', '완구', 'toy', 'ブ릭', '레고호환', '피겨놀이', '인형놀이'],
+  toy: ['玩具', '장난감', '완구', 'toy', 'ブ릭', '레고호환', '피겨놀이', '인형놀이', '치발기', '牙胶', 'teether', '모빌', 'mobile', '딸랑이', 'rattle'],
   slime: ['slime', '슬라임', '水晶泥', '史莱姆', '말랑이', '퍼티', 'putty', '점토', '粘土', '彩泥'],
   adultDeclared: ['14岁以上', '14세 이상', '만 14세', '15岁以上', '18禁', '성인용', 'ages 14+'],
   collectibleDecor: ['摆件', '手办', '장식', '인테리어 소품', '피규어 장식', 'decor', 'ornament'],
@@ -227,7 +227,7 @@ const REGULATION_RULES: RegulationRule[] = [
     agency: '국가기술표준원',
     requirementType: 'SAFETY_CERT',
     requirementName: '슬라임류 유핵물질 고위험 경고',
-    appliesWhen: (a) => a.isChildrenProduct && a.isSlimeOrPutty,
+    appliesWhen: (a) => a.isSlimeOrPutty,
     estimatedCostKrw: { min: 0, max: 0 },
     estimatedWeeks: { min: 0, max: 0 },
     requiredDocuments: ['붕산·방부제(CMIT/MIT) 성분 시험 필수'],

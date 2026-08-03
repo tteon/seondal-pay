@@ -59,6 +59,8 @@ import { isCoupangConfigured } from './coupangPartnersClient';
 import { scanSellerProducts, getSellerProduct, COUPANG_VENDOR_ID } from './coupangSellerClient';
 import { addObservation, listObservations } from './coupangObservationStore';
 import { computeMarketPie, computeEntryAnalysis, enrichPortfolioWithMarketEntry } from './marketPieEngine';
+import { createMcpHandler } from './mcpServer';
+import { assessProductCompliance } from './complianceVerdictEngine';
 import { createOnboardingProfile, getProfile, buildRecommendations } from './onboardingEngine';
 import { PRICING_TABLE, DIFFICULTY_MULTIPLIERS, SUBSCRIPTIONS, SAAS_PLANS, priceFor } from './pricingEngine';
 import { buildPortfolio } from './portfolioEngine';
@@ -1129,6 +1131,42 @@ app.get('/api/profiles', (_req: Request, res: Response) => {
 });
 
 /**
+ * Regulatory compliance assessment — deterministic guardrail verdict
+ * (어린이제품법/전파법/전안법/식품위생법/원산지, agency routing, cost/weeks).
+ */
+app.post('/api/compliance/assess', (req: Request, res: Response) => {
+  const { title, extraText } = req.body || {};
+  if (!title) return res.status(400).json({ error: 'title is required' });
+  try {
+    return res.status(200).json(assessProductCompliance(String(title), String(extraText || '')));
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/** Assess every product currently in the catalog. */
+app.get('/api/compliance/assess-catalog', async (_req: Request, res: Response) => {
+  try {
+    const products = await queryProducts();
+    const verdicts = products.map((p: any) => {
+      const v = assessProductCompliance(p.title || '', JSON.stringify(p.dataJsonLd || {}));
+      return {
+        productId: p.productId,
+        title: p.title,
+        verdict: v.verdict,
+        verdictLabel: v.verdictLabel,
+        agenciesInvolved: v.agenciesInvolved,
+        totalEstimatedCostKrw: v.totalEstimatedCostKrw,
+        totalEstimatedWeeks: v.totalEstimatedWeeks,
+      };
+    });
+    return res.status(200).json({ count: verdicts.length, verdicts });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * Coupang Partners benchmarks — pull REAL category retail prices and inspect.
  */
 app.post('/api/ingest/coupang-benchmarks', async (_req: Request, res: Response) => {
@@ -1437,9 +1475,28 @@ app.get('/api/pricing', (req: Request, res: Response) => {
   });
 });
 
+/**
+ * MCP (Model Context Protocol) — Claude/MCP clients call our engines as tools.
+ * Paid tools are gated by the same MPP/Solana verification path.
+ */
+const mcpHandler = createMcpHandler({
+  merchantPublicKey,
+  verifyPayment,
+  getDevnetBalance: async (address: string) =>
+    (await connection.getBalance(new PublicKey(address))) / 1e9,
+});
+app.post('/mcp', mcpHandler);
+app.get('/mcp', (_req: Request, res: Response) => {
+  res.json({
+    name: 'seondal-pay MCP server',
+    transport: 'POST /mcp (JSON-RPC 2.0)',
+    methods: ['initialize', 'tools/list', 'tools/call', 'ping'],
+    paidToolsFlow: 'tools/call get_payment_challenge → pay on Solana devnet (Memo=externalId) → retry with paymentSignature',
+  });
+});
+
 app.listen(PORT, '0.0.0.0', async () => {
-  await initDb();
-  // Continuous Coupang ↔ 1688 margin comparison + user alert-rule evaluation
+  await initDb();  // Continuous Coupang ↔ 1688 margin comparison + user alert-rule evaluation
   startComparatorLoop(parseInt(process.env.COMPARATOR_INTERVAL_MS || '900000'), async () => {
     const fires = evaluateRules('sweep');
     for (const f of fires) {
