@@ -80,7 +80,7 @@ c.setFillColor(HexColor('#ffffff')); c.setFont('KR-B', 12); c.drawCentredString(
 c.setFillColor(INK); c.setFont('KR-B', 40); c.drawString(20*mm, H-78*mm, '에이전트가 스스로 결제하는')
 c.drawString(20*mm, H-92*mm, '크로스볼셀러 소싱 인텔리전스')
 c.setFillColor(INK2); c.setFont('KR', 14)
-c.drawString(20*mm, H-106*mm, 'AI 에이전트 생태계(MCP)와 Solana 미세결제로, 1인 셀러의 분석·규제·진입을 자율 수행')
+c.drawString(20*mm, H-106*mm, 'Solana M2M 미세결제 × 온톨로지 지식그래프 × 100-카테고리 벤치마크 데이터셋')
 c.setFillColor(BLUE); c.setFont('KR-B', 13); c.drawString(20*mm, H-120*mm, 'Clear Insights, Fair Commerce by SEONDAL')
 c.setFillColor(INK3); c.setFont('KR', 11)
 c.drawString(20*mm, 28*mm, 'github.com/tteon/seondal-pay  ·  seondal-pay-1064390008895.us-central1.run.app')
@@ -89,22 +89,22 @@ c.setFillColor(INK3); c.setFont('KR', 9); c.drawRightString(W-15*mm, 10*mm, f'SE
 c.showPage()
 
 # ══ S2. 문제 — 히어로 지표 ══
-base('01 · 문제', '격차는 실재한다 — 실측 72.5% 마진')
-hero('72.5%', '우리 컴패레이터가 실측한 ROI 사례 (수유등: 랜디드 ₩4,793 vs 쿠팡 최저 ₩17,900)', H-66*mm)
+base('01 · 문제', '격차는 실재한다 — 15개 카탈로그 & 100개 카테고리 실측')
+hero('72.5%', '우리 컴패레이터가 실측한 최고 ROI (수유등: 랜디드 ₩4,793 vs 쿠팡 ₩17,900)', H-66*mm)
 bullets([
-    ('그런데', '셀러 대부분은 이 계산 없이 진입합니다 — 재고 부담·통관 거부·과대광고 제재로 3~6개월 내 이탈.'),
-    ('히어로 페르소나', '자본 ₩300만의 초기 셀러 — 하루 3시간을 검색에 쓰지만, 랜디드코스트는 엑셀로도 못 구합니다.'),
+    ('소싱 정보의 비대칭', '1688 도매가 1.2만 원짜리가 한국 쿠팡에서는 5.4만 원 — 계산 도구 없이는 3~6개월 내 90% 이탈.'),
+    ('데이터셋 확장 실증', '15개 고품질 상품 + 10대 마크로 섹터 100개 카테고리 실측 데이터로 검증 가능.'),
 ], y=H-92*mm)
 c.showPage()
 
 # ══ S3. 문제 — 구조 ══
 base('01 · 문제', '혼자 계산할 수 없는 연쇄 과정')
 bullets([
-    ('연쇄 과정', '시장 조사 → 규제 검토 → 수수료·물류비 → 상품 등록. 전부 1인 셀러의 수작업입니다.'),
-    ('도구의 부재', '유용한 데이터는 있으나, 기계가 즉시 구매·검증할 수단이 없습니다.\nPG·구독·API 키는 사람 전제이고, 원화 예치는 전자금융거래법 PG 등록 의무.'),
-    ('본질', '정보 비대칭은 기술 부족이 아니라, 에이전트가 스스로 거래할 결제·검증 레일의 부재입니다.'),
+    ('연쇄 과정', '시장 조사 → 관세·물류비 → KC 안전인증 → 쿠팡 수수료(10.8%) 공제 후 순마진 계산.'),
+    ('도구의 부재', '기존 PG/카드/구독 결제는 사람 전제 — AI 에이전트가 자율 구매할 결제 수단 없음.\n원화 수탁 시 전자금융거래법 PG 등록 리스크 발생.'),
+    ('본질', '에이전트가 스스로 결제하고 검증된 소싱 정보를 주고받을 M2M 결제 레일 부재.'),
 ])
-metric_row([('도매-소매 격차', '₩32K → ₩56K', BRAND), ('초기 자본', '₩300만', BLUE), ('이탈 시점', '3~6개월', RED)], 34*mm)
+metric_row([('도매-소매 격차', '₩32K → ₩56K', BRAND), ('100 카테고리', '10대 섹터', BLUE), ('이탈 시점', '3~6개월', RED)], 34*mm)
 c.showPage()
 
 # ══ S4. 시장 ══
@@ -116,12 +116,12 @@ table(
         ['쿠팡 마켓플레이스(3P) 성장', '연 60%+', '동 공시'],
         ['국내 이커머스 시장', '약 200조원+', '통계청'],
         ['해외직구(역직구 포함) 급증', '중국발 직구 연 5조원대', '관세청·언론'],
-        ['1인 사업자/사입 창업', '수백만, 2030 급증', '통계청·중기부'],
+        ['100-카테고리 벤치마크', '10대 마크로 섹터 전수 구축', 'SEONDAL DB'],
     ],
     [24*mm, 120*mm, 200*mm], H - 56*mm, row_h=12*mm
 )
 bullets([
-    ('읽는 법', '쿠팡 3P가 가장 빠르게 커지는 시장 — 진입자는 느는데, 진입 판정 데이터는 없습니다.'),
+    ('시장의 기회', '초보 셀러 진입자는 폭증하나, 수입원가·규제·마진을 즉시 산출해줄 에이전틱 OS는 부재.'),
 ], y=H-122*mm)
 c.showPage()
 
@@ -130,24 +130,24 @@ base('02 · 가설', '세 가설, 세 가지 측정')
 table(
     ['가설', '내용', '측정'],
     [
-        ['지속성 부재', '포기는 의지가 아니라 수동 계산의 피로도 때문', '계산 자동화 여부'],
-        ['리스크 판단 오류', '규제·숨은 비용을 예측 못 해 자금 손실', 'LLM 판정 오류율'],
-        ['시스템 부재', '강의가 아니라 대신 실행하는 에이전트가 필요', '자율 결제·정산 실현'],
+        ['지속성 부재', '수동 계산 피로도가 셀러 포기의 핵심 원인', '100-카테고리 자동 산출'],
+        ['리스크 판단 오류', 'KC 안전인증 및 RCEP 관세 누락으로 손실', '온톨로지 가드레일 정밀도'],
+        ['M2M 자율 정산', '에이전트 간 결제 레일이 없어 정보 유통 불가', 'Solana HTTP 402 결제 성공률'],
     ],
     [24*mm, 108*mm, 235*mm], H - 56*mm, row_h=12*mm
 )
 bullets([
-    ('검증 원칙', '전부 측정 가능한 형태로 — 사전 등록 실험 2종(200 호출), 실제 devnet 결제, 라이브 시스템.'),
+    ('검증 원칙', '전부 측정 가능한 형태로 — 사전 등록 실험 2종, 라이브 Solana Devnet 온체인 결제 실증.'),
 ], y=H-104*mm)
 c.showPage()
 
 # ══ S6. 솔루션 요약 ══
 base('03 · 솔루션', '에이전트가 판단하고, 온체인이 정산한다')
 bullets([
-    ('한 문장', 'MCP 에이전트 생태계 + pay.sh(MPP) 미세결제로, 1인 셀러 대신 분석·규제 1차 검증·진입 판정을 자율 수행.'),
-    ('에이전트의 세 판단',
-     '① 유의성 — 쿠팡 Wing 산식으로 순마진 계산, 마켓 파이와 비교해 진입 가이던스\n② 예산 — 데이터 구매 시 ≤0.06 SOL 정책 적합 여부\n③ 규제 — 결정론적 룰 엔진 1차 선별 (모호하면 사람에게)'),
-    ('온체인 동작', 'pay.sh(MPP)로 Tier 0.005~0.05 SOL 미세결제 → externalId를 Memo에 기록 → 온체인 검증 → Payment-Receipt.'),
+    ('핵심 정의', 'MCP 에이전트 생태계 + pay.sh(MPP) 미세결제로, 1인 셀러 대신 분석·규제 1차 검증·진입 판정을 자율 수행.'),
+    ('15+ 카탈로그 & 100-카테고리 엔진',
+     '1688 공장가 × RCEP 관세 × 국제 배송비 = 수입원가(Landed Cost)\n쿠팡 벤치마크가 - 10.8% 수수료 = 순마진 및 ROI 실시간 산출.'),
+    ('M2M 결제 정산', 'HTTP 402 Challenge → 0.005~0.05 SOL 결제 → Memo externalId 바인딩 → Payment-Receipt 발급.'),
 ])
 c.showPage()
 
@@ -155,13 +155,13 @@ c.showPage()
 base('04 · 작동 플로우', '402 챌린지부터 리포트까지 8단계')
 steps = [
     ('1', '402 챌린지', 'WWW-Authenticate: Payment (JCS, externalId, TTL 300초)'),
-    ('2', '정책 검증', '예산 한도 자율 판단 — 무승인'),
-    ('3', '서명·전송', 'SOL transfer + Memo(externalId) → devnet'),
+    ('2', '정책 검증', '에이전트 예산 한도(≤0.06 SOL) 자율 검증'),
+    ('3', '서명·전송', 'SOL transfer + Memo(externalId) → Solana Devnet'),
     ('4', '온체인 검증', '금액·수신자·메모 바인딩 + 리플레이 차단'),
-    ('5', '영수증', 'Payment-Receipt (tx 시그니처 = 정산 증명)'),
-    ('6', '크롤링·타이핑', 'JSON-LD 노드 → GCS + Cloud SQL'),
-    ('7', '규제·마진', '룰 가드레일 + 쿠팡 실측−수수료−배송 vs 랜디드'),
-    ('8', '라우팅·알림', '프로파일 매칭 → Discord(고ROI) → OpenClaw 핸드오프'),
+    ('5', '영수증 발급', 'Payment-Receipt (tx 시그니처 = 온체인 정산 증명)'),
+    ('6', '크롤링·타이핑', 'JSON-LD 제품 노드 저장 (Cloud SQL + GCS)'),
+    ('7', '규제·마진 산출', 'KC 안전인증 가드레일 + RCEP 관세 + 쿠팡 수수료(10.8%) 공제'),
+    ('8', '라우팅·알림', '포트폴리오 추천 → Discord 고ROI 푸시 → OpenClaw 핸드오프'),
 ]
 y = H - 52*mm
 for n, t, d in steps:
@@ -173,7 +173,7 @@ for n, t, d in steps:
 c.showPage()
 
 # ══ S8. 증빙 1 — 실험 ══
-base('05 · 가설 증빙 1', '토큰 −81%, 환각 0% — 타입드 노드의 힘')
+base('05 · 가설 증빙 1', '토큰 −81%, 환각 0% — 온톨로지 파이프라인')
 metric_row([
     ('토큰 절감', '−81.4%', GREEN),
     ('팩트 정확도', '98% vs 91%', BLUE),
@@ -181,94 +181,90 @@ metric_row([
     ('추정 비용', '−40.1%', BRAND),
 ], H-68*mm)
 bullets([
-    ('설계', '사전 등록 · 200 호출 · 동일 모델(Kimi K3) · 조걳별 결제 키 분리 · 결정적 룰 채점.'),
-    ('멀티에이전트', '자유 텍스트 핸드오프 50%(맥락 소실) → 타입드 JSON 90% 회복 — 타입드 경계가 본질.'),
+    ('실험 설계', '200샘플 사전 등록 실험 · Kimi K3 모델 · 조건별 결제 키 분리 · 결정적 룰 채점.'),
+    ('A2A 파이프라인', '자유 텍스트 전달 시 50%(맥락 소실) → 타입드 JSON-LD 전달 시 90% 회복.'),
 ], y=H-104*mm)
 c.showPage()
 
-# ══ S9. 증빙 2 — 온체인 + 감사 ══
-base('05 · 가설 증빙 2', '실결제가 온체인에 있다')
+# ══ S9. 증빙 2 — SaaS UI & 확장 데모 ══
+base('05 · 가설 증빙 2', 'Luminous SaaS Console & 3대 확장 시나리오')
 bullets([
-    ('실결제', 'Agent A가 devnet에 0.05 SOL 실제 전송 → 서버 온체인 검증 → Payment-Receipt.\ntx 2VDRaQ9X…BkH — solscan에서 누구나 조회. Memo의 externalId로 바인딩 확인.'),
-    ('독립 감사', '원시 200건 재집계 일치 · trace_id 200개 유일 · 응답 전문 캡처로 환각 실례(디스트랙터 오인용) 확인.'),
-    ('무중단 실연', '레플리카 2→1 수동 조작 → ArgoCD가 Git 상태로 수십 초 내 자동 복귀.'),
+    ('Modern SaaS Console', 'Glassmorphic UI, 5개 탭(개요, 15+ 카탈로그, 100-카테고리 벤치마크, 라이브 에이전트, 포트폴리오).'),
+    ('Scene 1: 자율 결제', '고마진 아이템 발굴 → HTTP 402 Solana Settlement → 온체인 Receipt 발급.'),
+    ('Scene 2: 규제 가드레일', 'RCEP 관세율 자동 계산 + KC 안전인증 필요 여부 (펫 피더 vs 식기) 자동 판정.'),
+    ('Scene 3: Dynamic Self-Healing', '1688 공장가 변동 시 마진 재산출 및 GitOps ArgoCD 무중단 복구.'),
 ])
 c.showPage()
 
 # ══ S10. 기술 스택 ══
-base('06 · 기술 스택', '타입드 노드만 오가는 이유')
+base('06 · 기술 스택', '온체인 결제와 지식 그래프의 결합')
 bullets([
-    ('결제·정산', 'Solana(web3.js) + pay.sh/MPP(draft-solana-charge-00) 양방향 구현 — JCS 정규화, atomic 소비, Zero-Custody.'),
-    ('지식 그래프', 'schema.org/Product 정합 JSON-LD + ODK/OWL(seondal-product.ofn) — MOQ 사다리·RCEP·공급처 신뢰 등 도메인 확장.'),
-    ('에이전트', 'MCP 서버(JSON-RPC) — 도구 8종, 유료 도구는 MPP 결제 게이팅. openai-agents SDK 역할 분해 실험.'),
-    ('규제', '결정론적 룰 엔진(KC·전파·전안법·식품위생) — UNI-PASS·식약처 DB RAG는 차기 마일스톤.'),
-    ('인프라', 'GKE Autopilot + ArgoCD app-of-apps · Cloud SQL(JSONB)+Auth Proxy · Cloud Run · Secret Manager.'),
-    ('관찰성', 'OTel + Prometheus + Grafana + Loki + Tempo — 메트릭·로그(trace_id)·트레이스 3축.'),
+    ('결제·정산', 'Solana(web3.js) + pay.sh/MPP(draft-solana-charge-00) 구현 — JCS 정규화, Zero-Custody.'),
+    ('지식 그래프', 'schema.org/Product JSON-LD + 100-카테고리 벤치마크 엔진 (Baidu 트렌드, MOQ, KC 가드레일).'),
+    ('에이전트', 'MCP 서버(JSON-RPC) — 유료 도구 MPP 게이팅, Kimi 3.0 & MARA 멀티모델 오케스트레이터.'),
+    ('인프라 & 관찰성', 'GKE Autopilot + ArgoCD GitOps + Prometheus/Grafana/Loki/Tempo 3축 모니터링.'),
 ])
 c.showPage()
 
 # ══ S11. 아키텍처 ══
-base('07 · 아키텍처', '무중단은 선언이다 — GitOps')
+base('07 · 아키텍처', 'GitOps 기반 생산급 배포 아키텍처')
 bullets([
-    ('흐름', 'GitHub → ArgoCD(app-of-apps) → GKE Autopilot: 앱 ×2(LB) + 관찰성 5스택. Cloud Run이 평가자 접속면.'),
-    ('결제 경로', 'Agent A → LB → 402 → devnet(에이전트 직접 전송) → 서버 검증 → 크롤링 → GCS + Cloud SQL(Proxy) → 알림.'),
-    ('무중단 장치', '레플리카 2 · 헬스 프로브 · DB 재시도(5회) · 시크릿은 Secret만 · 장애 주입 복귀 실연.'),
+    ('배포 구조', 'GitHub → ArgoCD(app-of-apps) → GKE Autopilot: 앱 ×2(LB) + 관찰성 5스택 자동동기화.'),
+    ('데이터 처리', 'Agent A → LB → HTTP 402 Challenge → Solana Devnet → Cloud SQL (JSONB) 저장.'),
+    ('자가 치유', 'ArgoCD가 매니페스트 감시 — 설정 이탈 시 수초 내 수동 intervention 없이 자동 복구.'),
 ])
 c.showPage()
 
 # ══ S12. 비즈니스 모델 ══
-base('08 · 비즈니스 모델', '쿼리당 결제, 데이터가 깊이를 판다')
+base('08 · 비즈니스 모델', '데이터 깊이에 따른 Tier 미세결제')
 table(
     ['Tier', '가격', '제공'],
     [
         ['T1', '0.005 SOL', '기본 메타데이터'],
-        ['T2', '0.015 SOL', '물류·도매 스펙'],
-        ['T3', '0.050 SOL', '쿠팡 실측·판매자 경제·ROI·라우팅'],
+        ['T2', '0.015 SOL', '물류·RCEP 관세·KC 규제 스펙'],
+        ['T3', '0.050 SOL', '쿠팡 실측·순마진(10.8% 공제)·ROI·포트폴리오 라우팅'],
     ],
     [24*mm, 60*mm, 105*mm], H - 56*mm, row_h=11*mm
 )
 bullets([
-    ('단위경제', '수수료 ~0.000005 SOL/tx — 거래 = 사용 증거 = 매출. 확장: 프리미엄 피드 · 스토어 수수료 15% · 프라이빗 배포.'),
+    ('단위 경제', 'Solana 수수료 ~0.000005 SOL/tx — 마진율 99%+; 데이터 판매 시 즉시 실시간 정산.'),
 ], y=H-102*mm)
 c.showPage()
 
 # ══ S13. 성장 엔진 ══
-base('08 · 성장 엔진', '성장은 복리로 쌓인다 — 3개의 플라이휠')
+base('08 · 성장 엔진', '데이터와 에이전트 양면 네트워크')
 bullets([
-    ('① 데이터 플라이휠', '더 많은 결제·관측 → 마켓 파이·컴패레이터 정확도 ↑ → 다음 사용자에게 더 가치 → 더 많은 결제.'),
-    ('② 온톨로지 자산', '타이핑된 상품 그래프가 축적될수록 매칭 정밀도 ↑ — 후발자가 못 쫓는 데이터 해자.'),
-    ('③ 에이전트 양면 시장', '데이터 판매자(도구)가 모이면 구매자가 온다 → MCP 마켓플레이스의 수수료가 거래량에 복리.'),
-    ('비용 구조', '거래 원가 ~0 (Solana 수수료) — 볼륨이 커져도 인걸비가 아니라 인프라만 선형.'),
+    ('① 데이터 플라이휠', '더 많은 M2M 결제·조회 → 100-카테고리 마진 정밀도 상승 → 신규 셀러 유입 증대.'),
+    ('② 온톨로지 데이터 해자', 'JSON-LD 제품 그래프 축적으로 경쟁자가 복제할 수 없는 소싱 지식 자산 구축.'),
+    ('③ 에이전트 마켓플레이스', '외부 데이터 공급 에이전트 참여 시 15% 수수료 획득 구조로 확장.'),
 ])
 c.showPage()
 
 # ══ S14. 로드맵 ══
-base('09 · 로드맵', '다음은 실전 검증 — 1인 셀러 코호트')
+base('09 · 로드맵', '1인 셀러 실전 배포 및 생태계 확장')
 bullets([
-    ('목표', '아이디어의 현실성 검증 — 실제 1인 창업자에게 배포하고 피드백 루프로 제품을 다듬는다.'),
-    ('실험 설계', 'Discord 셀러 커뮤니티 코호트 30~50명 → 관심 프로파일 등록 → 주간 고ROI 알림 제공.'),
-    ('측정 지표', '활성화율(알림→콘솔 방문) · 전환율(리포트→리스팅 의사) · 재사용률(주간 재방문) · NPS.'),
-    ('판정 기준', '코호트 30% 이상이 4주 내 재사용 시 제품-시장 적합 신호로 간주, 아니면 프로파일/알림 재설계.'),
-    ('이후', 'Partners 승인(마켓 실측 API) · 규제 RAG(UNI-PASS·식약처) · USDC 정산 · 프라이빗 배포.'),
+    ('단기 마일스톤', 'Discord 셀러 커뮤니티 50명 대상 자본맞춤 알림 제공 및 파트너 API 연동.'),
+    ('중기 마일스톤', 'USDC(SPL) 안합 정산 지원, x402 v2 Facilitator 분리, UNI-PASS 관세청 RAG 자동화.'),
+    ('장기 비전', '글로벌 1688-쿠팡/아마존 크로스보더 M2M 에이전트 결제 수수료 인프라로 도약.'),
 ])
 c.showPage()
 
-# ══ S15. 링크 + 실행 ══
-base('10 · 라이브 링크', '지금 바로 확인하세요')
+# ══ S15. 데모 & 라이브 링크 ══
+base('10 · 데모 & 라이브 링크', '확장 3분 데모 및 실시간 시스템')
 table(
-    ['항목', '값'],
+    ['항목', '링크/접속 정보'],
     [
-        ['SaaS Console', 'seondal-pay-1064390008895.us-central1.run.app  (evaluator@seondal.demo / seondal2026!)'],
-        ['GitHub', 'github.com/tteon/seondal-pay (README 실행 가이드)'],
-        ['Grafana', '34.171.84.231  (admin / seondal-admin)'],
-        ['ArgoCD', '136.116.158.227  (admin — docs/ACCESS.md)'],
-        ['온체인 증명', 'solscan.io/tx/2VDRaQ9X…BkH?cluster=devnet'],
+        ['SaaS Console', 'seondal-pay-1064390008895.us-central1.run.app (또는 http://localhost:3000)'],
+        ['GitHub Repo', 'github.com/tteon/seondal-pay'],
+        ['Grafana 관찰성', '34.171.84.231 (admin / seondal-admin)'],
+        ['ArgoCD GitOps', '136.116.158.227 (admin)'],
+        ['Solana Devnet 증명', 'solscan.io/tx/5gHTNnaDWQTvhMZKEuR7ttjhr5jmhbyCHcsiR8dRFxBkh6un1HYVg1Vub38We8cikaKFtkvHj5dmHgtPhrfQaWZW'],
     ],
     [24*mm, 70*mm], H - 56*mm, row_h=11*mm
 )
 bullets([
-    ('로컬 재현', 'npm run build → test_mpp_flow.ts (MPP 7종) · test_mcp_flow.ts (MCP 7종) · experiments/*.py (실험)'),
+    ('3분 확장 데모', 'Act 1 자율 결제 → Act 2 RCEP/KC 가드레일 → Act 3 Dynamic Self-Healing (DEMO_SCENARIO.md 참조)'),
 ], y=H-116*mm)
 c.setFillColor(BRAND); c.setFont('KR-B', 15); c.drawString(22*mm, 20*mm, 'Clear Insights, Fair Commerce by SEONDAL')
 c.save()
-print('PDF v3 generated: docs/SEONDAL_Pay_소개서.pdf')
+print('PDF v3 updated: docs/SEONDAL_Pay_소개서.pdf')

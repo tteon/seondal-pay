@@ -22,7 +22,7 @@ async function main() {
 
   const list = await rpc('tools/list');
   const names = (list.data.result?.tools || []).map((t: any) => t.name);
-  check('tools/list has 7 tools', names.length === 7, names);
+  check('tools/list has 8 tools', names.length === 8, names);
   check('paid tool present', names.includes('get_sourcing_analysis'), names);
 
   const pie = await rpc('tools/call', { name: 'get_market_pie', arguments: { group: '롬퍼' } });

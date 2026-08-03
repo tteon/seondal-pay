@@ -18,6 +18,7 @@ import { issueChallenge, activeChallengeCount } from './mppEngine';
 import { compareProduct } from './comparatorEngine';
 import { routeOpportunity } from './interestProfileEngine';
 import { assessProductCompliance } from './complianceVerdictEngine';
+import { computeMarketPie, computeEntryAnalysis } from './marketPieEngine';
 
 export interface PipelineStep {
   step: number;
@@ -79,7 +80,61 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
 
   const candidate = pickCandidate(products, query);
   if (!candidate) {
-    steps.push({ step: 2, key: 'catalog.empty', title: '⚠️ 후보 없음', detail: '아직 이 상품은 창고에 없어요. 결제 플로우로 상품을 먼저 가져와 주세요.' });
+    // No catalog match → pivot to market-pie analysis for the keyword
+    const pie = computeMarketPie(query);
+    steps.push({
+      step: 2,
+      key: 'catalog.empty',
+      title: '🔍 창고에 없는 상품 — 대신 시장 파이 분석',
+      detail: pie.top.length > 0
+        ? `'${query}' 상품은 아직 우리 창고에 없어요. 대신 쿠팡 시장 데이터로 이 시장의 구조를 보여드릴게요.`
+        : `'${query}'은 창고에도 시장 데이터에도 없어요. OpenClaw로 쿠팡 가격·판매량을 먼저 수집해 주세요.`,
+      data: { query },
+    });
+    if (pie.top.length > 0) {
+      steps.push({
+        step: 3,
+        key: 'marketpie.overview',
+        title: '🥧 시장 파이 (TOP 판매자 점유율)',
+        detail: pie.top.slice(0, 3).map((e) =>
+          `${e.rank}위 ${e.productName.slice(0, 18)}… ₩${e.priceKrw.toLocaleString()} (월 ${e.monthlySales.toLocaleString()}건, ${e.sharePercent}%)`
+        ).join(' · '),
+        data: pie,
+      });
+      // Estimate our landed cost from incumbent prices (cross-border typical
+      // cost ≈ 40% of retail — documented assumption for the guide)
+      const estLanded = Math.round(pie.priceMedianKrw * 0.4 / 100) * 100;
+      const entry = computeEntryAnalysis(query, estLanded, 30);
+      steps.push({
+        step: 4,
+        key: 'marketpie.entry',
+        title: '🚪 이 시장 진입 판정',
+        detail: entry.guide + ` (추정 원가 ₩${estLanded.toLocaleString()} — 현재가의 약 40% 가정, 실제 도매가 확인 필요)`,
+        data: entry,
+      });
+      const best = entry.candidates.find((c) => c.feasible);
+      const report = {
+        productId: `market-${query}`,
+        title: `${query} (시장 분석)`,
+        wholesalePriceUsd: 0,
+        landedCostKrw: estLanded,
+        coupangPriceKrw: pie.priceMedianKrw,
+        marginKrw: best ? best.marginKrw : 0,
+        roiPercent: best ? best.roiPercent : 0,
+        matchedProfiles: [],
+        recommendation: entry.guide,
+        challengeId: 'market-analysis',
+        externalId: 'market-analysis',
+      };
+      steps.push({
+        step: 5,
+        key: 'report.card',
+        title: '📋 시장 분석 리포트',
+        detail: entry.guide,
+        data: report,
+      });
+      return { query, startedAt, finishedAt: new Date().toISOString(), steps, report };
+    }
     return { query, startedAt, finishedAt: new Date().toISOString(), steps, report: null };
   }
 
