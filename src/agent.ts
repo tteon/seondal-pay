@@ -87,10 +87,25 @@ async function checkAndPrepareFunds() {
 }
 
 async function evaluateAndScrape(opportunity: { url: string, maxProductPriceUsd: number }, tier: number = 3) {
+  // Retry policy: if a challenge expires mid-payment (slow devnet confirmation),
+  // start over with a fresh challenge once (bounded at 2 attempts).
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const expired = await attemptPaymentOnce(opportunity, tier, attempt);
+    if (!expired) return;
+    console.log(`[Agent A] ⚠️ Challenge expired/invalid mid-payment (attempt ${attempt}/2). Retrying with a fresh challenge...`);
+  }
+  console.log(`[Agent A] ❌ Gave up after 2 attempts for ${opportunity.url}`);
+}
+
+async function attemptPaymentOnce(
+  opportunity: { url: string, maxProductPriceUsd: number },
+  tier: number,
+  attempt: number
+): Promise<boolean /* true = expired/invalid, should retry */> {
   console.log(`\n--------------------------------------------------`);
-  console.log(`[Agent A] Evaluating opportunity (Tier ${tier}): ${opportunity.url}`);
+  console.log(`[Agent A] Evaluating opportunity (Tier ${tier}, attempt ${attempt}): ${opportunity.url}`);
   console.log(`--------------------------------------------------`);
-  
+
   try {
     // 1. Send initial POST request with requestedTier
     console.log(`[Agent A] Initiating request to Seller Central for Tier ${tier} data...`);
@@ -100,7 +115,7 @@ async function evaluateAndScrape(opportunity: { url: string, maxProductPriceUsd:
 
     if (response.status === 200) {
       console.log(`[Agent A] Data was already purchased and cached:`, response.data.data.title);
-      return;
+      return false; // done — no retry
     }
 
     if (response.status === 402) {
@@ -124,7 +139,7 @@ async function evaluateAndScrape(opportunity: { url: string, maxProductPriceUsd:
       // A2A Decision Point 1: Safety fee budget check
       if (amount > MAX_SOLANA_FEE_LIMIT) {
         console.log(`[Agent A] ❌ Transaction Aborted: Requested fee (${amount} SOL) exceeds safety limit (${MAX_SOLANA_FEE_LIMIT} SOL).`);
-        return;
+        return false; // policy abort — no retry
       }
       console.log(`[Agent A] ✓ Fee criteria matches (Amount: ${amount} SOL <= Limit: ${MAX_SOLANA_FEE_LIMIT} SOL).`);
 
@@ -247,7 +262,6 @@ async function evaluateAndScrape(opportunity: { url: string, maxProductPriceUsd:
         console.log(`  - Title: ${product.title}`);
         console.log(`  - Price: $${product.price} USD`);
         console.log(`  - Source Page: ${product.sourceUrl}`);
-        
         if (product.dataJsonLd) {
           console.log(`\n📐 [JSON-LD Ontology Properties Unlocked]`);
           console.log(`  - Brand:`, product.dataJsonLd.brand?.name);
@@ -277,11 +291,22 @@ async function evaluateAndScrape(opportunity: { url: string, maxProductPriceUsd:
         console.log(`\n❌ [Agent A] Verification failed on server side.`);
         console.log(`Status code: ${retryResponse.status}`);
         console.log(`Response:`, retryResponse.data);
+        // Retry signal: challenge expired/invalid (TTL passed during slow devnet confirm)
+        const msg = JSON.stringify(retryResponse.data || {});
+        if (retryResponse.status === 402 && (msg.includes('invalid-challenge') || msg.includes('expired'))) {
+          return true;
+        }
+        if (retryResponse.status === 400 && msg.includes('expired')) {
+          return true; // legacy header path
+        }
+        return false; // other failure — do not retry
       }
     }
   } catch (error: any) {
     console.error(`[Agent A] Error executing item evaluation:`, error.message);
+    return false;
   }
+  return false;
 }
 
 async function runAgent() {
