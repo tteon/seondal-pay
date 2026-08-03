@@ -1,7 +1,19 @@
-# 🎬 SEONDAL Pay — 데모 영상 촬영 순서표 (최종, 3분 컷)
+# 🎬 SEONDAL Pay — 데모 영상 촬영 순서표 (최종 개선판, 3분 컷)
 
-> **검증 완료일**: 2026-08-02 — 아래 모든 샷은 실환경에서 사전 검증됨 (리허설 통과).
-> **핵심 원칙**: 심사 기준 ①실온체인 결제 ②무승인 자율결제 ③Solana 스택 ④직관UX 를 시간축에 배치.
+> **최종 검증 및 개선일**: 2026-08-03
+> **개선 핵심**: ①자막(Subtitle) 전면 추가 ②'SaaS 요청 → 402 결제 → 온체인 서명 → 정산 언락' 자연스러운 서사 구성 ③3분 이내 완벽 타이밍 타이트 구성.
+
+---
+
+## 📌 3분 영상 스크립트 & 자막(Subtitle) 총괄표
+
+| 구간 | 장면 (Visual) | 주요 액션 | 💬 추천 화면 자막 (Subtitles) |
+|---|---|---|---|
+| **0:00–0:20** | **Act 1. 문제 제시 & 소싱 요청** | SaaS 콘솔 챗에 `"유아 롬퍼"` 입력 | `"1688 도매가 ₩32,472 vs 국내 소매가 ₩56,013 — AI 에이전트가 마진을 자동 추적합니다."`<br>`"유저의 데이터 요청 시 402 Payment Required 챌린지가 발급됩니다."` |
+| **0:20–1:05** | **Act 2. 온체인 자율 결제** | 터미널 `agent.ts` 실행 + Solscan 서명 확인 | `"HTTP 402 Payment Required 감지 — 예산 정책 범위(0.05 SOL) 자율 판단"`<br>`"사람의 개입 없이 Solana Devnet 상에서 무승인 서명 및 트랜잭션 전송"`<br>`"Solscan 검증: Memo에 externalId 식별자 온체인 영구 각인 완료"` |
+| **1:05–1:40** | **Act 3. SaaS 콘솔 정산 & 언락** | 대시보드 새로고침 (지갑 잔액 ↑) + Tier 3 리포트 언락 | `"결제 직후 Tier 3 심층 마진 리포트(ROI 72.5%) 실시간 언락!"`<br>`"상점/공급자 지갑 잔액 실시간 증가 — 투명한 Instant Settlement 실현"` |
+| **1:40–2:15** | **Act 4. 생태계 연동 & 운영 강건성** | Discord `#seondal-alerts` 알림 + Grafana / ArgoCD | `"Discord 자동 연동: 고마진 포착 시 OpenClaw 에이전트로 Handoff"`<br>`"ArgoCD 자가치유(Self-Healing) & Grafana Tempo(Trace ID) 실시간 관측성"` |
+| **2:15–3:00** | **Act 5. 실험 수치 & 클로징** | 정지 수치 카드 3장 + 라이브 URL & QR | `"검증된 성과: 온톨로지 토큰 -81.4%, 정확도 98%, 타입드 JSON 90% 회복"`<br>`"Standard: draft-solana-charge-00 wire-compatible 준수"`<br>`"Clear Insights, Fair Commerce by SEONDAL"` |
 
 ---
 
@@ -9,73 +21,46 @@
 
 | # | 항목 | 확인 명령/위치 | 기대값 |
 |---|---|---|---|
-| 1 | Cloud Run 콘솔 | https://seondal-pay-1064390008895.us-central1.run.app | 로그인 화면 (admin/admin) |
-| 2 | GKE 앱 | http://34.46.201.195/api/health | `{"status":"ok"}` |
-| 3 | Grafana | http://34.171.84.231 (admin/seondal-admin) | 대시보드 "SEONDAL Pay" 8패널 |
+| 1 | Cloud Run 콘솔 | https://seondal-pay-1064390008895.us-central1.run.app | 로그인 화면 (`admin`/`admin`) |
+| 2 | GKE 앱 API | http://34.46.201.195/api/health | `{"status":"ok"}` |
+| 3 | Grafana | http://34.171.84.231 (admin/seondal-admin) | 대시보드 "SEONDAL Pay" 패널 |
 | 4 | ArgoCD | https://136.116.158.227 | 전 앱 Synced/Healthy |
-| 5 | 클라이언트 지갑 | `npx ts-node scripts/airdrop_test.ts` 잔액만 | ≥0.15 SOL (3회 결제분) |
-| 6 | Discord 채널 | #seondal-alerts 열어두기 | 웹훅 연동됨 |
-| 7 | 솔스캔 탭 | solscan.io?cluster=devnet | tx 붙여넣기 준비 |
+| 5 | 클라이언트 지갑 | `npx ts-node scripts/airdrop_test.ts` 잔액 확인 | ≥0.15 SOL (3회 결제분 이상) |
+| 6 | Discord 채널 | #seondal-alerts 열어두기 | 웹훅 연동 확인 |
+| 7 | 솔스캔 탭 | solscan.io?cluster=devnet | 트랜잭션 조회 준비 |
 
-⚠️ **촬영 전 agent 결제를 1회도 미리 돌리지 말 것** — 잔액/히스토리가 신선해야 "방금 결제"가 진짜로 보임.
-
----
-
-## Act 1. 콜드오픈 — 문제 (0:00–0:15)
-
-- **화면**: 콘솔 카탈로그 캡처 or 쿠팡/1688 가격 비교 스틸. 자막:
-  > "1688 도매 ₩32,472 → 한국 소매 ₩56,013. 이 격차를 AI 에이전트가 스스로 '결제'해 검증합니다."
-- **날고**: 정보 비대칭 문제 + SEONDAL 한 줄 소개.
-
-## Act 2. 온체인 자율 결제 — 메인 샷 (0:15–0:45)
-
-- **화면 분할**: 좌) 터미널 `SERVER_URL=http://34.46.201.195/api/scrape MOCK_RPC_URL=... npx ts-node src/agent.ts` / 우) solscan 탭
-- **포착할 로그 라인** (순서대로 줌인):
-  1. `HTTP 402 Payment Required — MPP Challenge: id=…, externalId: SEOCHO-…`
-  2. `✓ Fee criteria matches (0.05 ≤ 0.06 SOL)` ← **예산 정책 자율 판단**
-  3. `Transaction signed autonomously` ← **무승인 서명**
-  4. `Confirmed on-chain!` → solscan에 시그니처 붙여넣기 → **Memo(externalId) 확대**
-  5. `Payment-Receipt received` + `🎉 Tier 3 Data Unlocked`
-- **날고**: "사람 승인 없이, 정책 안에서 에이전트가 직접 서명·결제·검증받습니다."
-
-## Act 3. SaaS 콘솔 — 유저 가시성 (0:45–1:15)
-
-- **Cloud Run 콘솔**에서:
-  1. 로그인 → 타일 4개: **지갑 잔액이 Act 2 결제만큼 늘어난 것을 새로고침으로 비교** ← "실제 정산"의 가장 직관적 증거
-  2. 카탈로그에 방금 결제된 상품 + ROI 배지 (🟢 고마진)
-  3. 챗에 **"유아 롬퍼"** 입력 → 6단계 스텝이 순서대로 채팅 버블로 표시 → 리포트 카드 (ROI 72.5% 실측 사례)
-- **날고**: "유저는 이 모든 걸 SaaS 콘솔에서 확인합니다."
-
-## Act 4. Discord × OpenClaw (1:15–1:40)
-
-- **Discord #seondal-alerts**: 🔥 고ROI 알림 임베드 도착하는 순간 캡처 (Act 2 결제가 트리거)
-- `🤖 OpenClaw Handoff Payload` JSON 확대 → (가능하면) OpenClaw에 "쿠팡에 올려줘" → 액션 결과
-- **날고**: "사람은 승인만 합니다. 실행은 에이전트 생태계가."
-
-## Act 5. 강건성 — ArgoCD + Grafana (1:40–2:05)
-
-- **ArgoCD UI**: 전 앱 Synced/Healthy 한 컷 → 터미널에서 `kubectl scale … --replicas=1` → **복귀 실연 (스피드업 편집 금지, 수십 초 실시간)**
-- **Grafana**: 방금 결제가 `Payment Verifications`·`Verified Revenue (SOL)`에 실시간 반영 + Tempo 트레이스 1컷 (trace_id 하나로 payment→scrape→db 추적)
-- **날고**: "데모가 아니라 운영 가능한 형태입니다."
-
-## Act 6. 실험과 표준 (2:05–2:35)
-
-- **수치 카드** (정지 화면 3장):
-  1. 온톨로지: 토큰 **−81.4%**, 정확도 **98%**, 환각 **0%**
-  2. 멀티에이전트: 자유 텍스트 50% → **타입드 JSON 90% 회복** (Rule 2.1 실증)
-  3. 표준: `draft-solana-charge-00` wire-compatible + 이중지불/TTL/RFC9457
-- **날고**: "주장이 아니라 측정입니다 — 재현 가능한 실험과 열린 표준."
-
-## Act 7. 클로징 (2:35–3:00)
-
-- 라이브 URL 3종 (Cloud Run 콘솔 / Grafana / ArgoCD) + GitHub QR (tteon/seondal-pay)
-- 슬로건: **"Clear Insights, Fair Commerce by SEONDAL"**
+⚠️ **주의**: 잔액/히스토리가 신선하게 보이도록 촬영 직전 지갑 잔액을 확인합니다.
 
 ---
 
-## 촬영 팁
+## 상세 액션 가이드
 
-- **한 화면 분할 유지**: 좌 터미널 / 우 브라우저 — Act 2의 결제→Act 3의 잔액 변화 연결감
-- Grafana는 `?kiosk` 전체화면
-- 실패 테이크 대비: 클라이언트 지갑 잔액 3회분 확보 후 촬영 시작 (0.15 SOL+)
-- 모든 외부 IP는 Act 0 표의 값을 그대로 자막에 사용
+### Act 1. 콜드오픈 & 소싱 요청 (0:00–0:20)
+- **화면**: Cloud Run SaaS 콘솔
+- **동작**: 유저가 채팅창에 `"유아 롬퍼"` 입력 후 실행 버튼 클릭.
+- **포인트**: 마진 분석 및 402 결제 필요 메세지 노출.
+
+### Act 2. 온체인 자율 결제 — 핵심 샷 (0:20–1:05)
+- **화면**: 좌) 터미널 (`npx ts-node src/agent.ts`) / 우) Solscan 탭
+- **포착 로그**:
+  1. `HTTP 402 Payment Required — MPP Challenge`
+  2. `✓ Fee criteria matches (0.05 ≤ 0.06 SOL)`
+  3. `Transaction signed autonomously`
+  4. `Confirmed on-chain!` → Solscan Signature 붙여넣기 및 Memo 확인
+  5. `🎉 Tier 3 Data Unlocked`
+
+### Act 3. SaaS 콘솔 정산 & 언락 (1:05–1:40)
+- **화면**: Cloud Run SaaS 콘솔
+- **동작**: 
+  1. 대시보드 새로고침 → 상점 지갑 잔액이 결제액만큼 즉시 증가된 것 포착.
+  2. 채팅창에 ROI 72.5% 심층 리포트 카드 및 마진 분석 6단계 렌더링 확인.
+
+### Act 4. Discord × 인프라 강건성 (1:40–2:15)
+- **화면**: Discord `#seondal-alerts` & Grafana / ArgoCD
+- **동작**:
+  1. Discord 채널에 뜬 🔥 고마진 알림 카드 캡처.
+  2. ArgoCD Synced 상태 및 Grafana Tempo 트레이스(payment→scrape→db) 확인.
+
+### Act 5. 실험 수치 & 클로징 (2:15–3:00)
+- **화면**: 수치 성과 요약 장미 카드 (토큰 -81.4%, 정확도 98%, RFC9457 준수) + 라이브 URL & QR.
+- **슬로건**: *"Clear Insights, Fair Commerce by SEONDAL"*

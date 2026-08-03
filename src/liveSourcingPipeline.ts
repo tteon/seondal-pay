@@ -71,15 +71,15 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
   steps.push({
     step: 1,
     key: 'catalog.scan',
-    title: '🗄️ 카탈로그 스캔',
-    detail: `Cloud SQL(PostgreSQL)에 적재된 상품 ${products.length}건 조회`,
+    title: '🗄️ 상품 창고 확인',
+    detail: `우리 데이터 창고에 쌓인 상품 ${products.length}건을 먼저 살펴서, 질문과 가장 가까운 후보를 찾습니다.`,
     data: { count: products.length },
     durationMs: Date.now() - t0,
   });
 
   const candidate = pickCandidate(products, query);
   if (!candidate) {
-    steps.push({ step: 2, key: 'catalog.empty', title: '⚠️ 후보 없음', detail: '카탈로그가 비어 있습니다. /api/scrape 결제 플로우로 상품을 먼저 적재하세요.' });
+    steps.push({ step: 2, key: 'catalog.empty', title: '⚠️ 후보 없음', detail: '아직 이 상품은 창고에 없어요. 결제 플로우로 상품을 먼저 가져와 주세요.' });
     return { query, startedAt, finishedAt: new Date().toISOString(), steps, report: null };
   }
 
@@ -97,8 +97,8 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
   steps.push({
     step: 2,
     key: 'mpp.challenge',
-    title: '💳 MPP 402 챌린지 발행',
-    detail: `Tier ${tier} 데이터 접근권 — ${tierPrice} SOL · TTL 300초 · externalId는 온체인 Memo로 바인딩`,
+    title: '💳 데이터 사용료 안내',
+    detail: `이 분석 데이터는 유료예요 — ${tierPrice} SOL(수십 원 수준). 5분 안에 결제해야 하고, 결제 증명은 블록체인에 함께 기록돼서 나중에 누구든 확인할 수 있어요.`,
     data: {
       challengeId: challenge.id,
       amountLamports: challenge.chargeRequest.amount,
@@ -116,8 +116,8 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
   steps.push({
     step: 3,
     key: 'ontology.typing',
-    title: '🧬 온톨로지 타이핑 (Rule 2.1)',
-    detail: `원시 텍스트 대신 schema.org/Product 정합 타입드 노드만 A2A로 전달 — 속성 ${typedProps.length}종`,
+    title: '🧬 상품 정보 표준 카드화',
+    detail: `웹페이지 원문(광고·추천 잡동사니) 대신, 판단에 필요한 정볧만 담은 표준 카드로 변환해요 — ${typedProps.length}가지 속성(최소주문수량·무게·공장위치·재질·기준가). AI가 헷갈리지 않게 하는 장치예요.`,
     data: {
       '@type': jsonLd['@type'] || 'Product',
       moq: jsonLd.offers?.moq?.value,
@@ -132,8 +132,8 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
   steps.push({
     step: 4,
     key: 'compliance.guardrail',
-    title: '🛡️ 규제 1차 검증 (가드레일)',
-    detail: `${compliance.verdictLabel} — ${compliance.agenciesInvolved.length ? compliance.agenciesInvolved.join('+') : '관세청 표시사항만'} · 예상 비용 ₩${compliance.totalEstimatedCostKrw.min.toLocaleString()}~${compliance.totalEstimatedCostKrw.max.toLocaleString()} / ${compliance.totalEstimatedWeeks.min}~${compliance.totalEstimatedWeeks.max}주`,
+    title: '🛡️ 수입 규제 사전 확인',
+    detail: `${compliance.verdictLabel} — ${compliance.agenciesInvolved.length ? compliance.agenciesInvolved.join('+') : '표시사항만 지키면 OK'} · 예상 비용 ₩${compliance.totalEstimatedCostKrw.min.toLocaleString()}~${compliance.totalEstimatedCostKrw.max.toLocaleString()} / 기간 ${compliance.totalEstimatedWeeks.min}~${compliance.totalEstimatedWeeks.max}주`,
     data: {
       verdict: compliance.verdict,
       requirements: compliance.requirements.map((r) => ({
@@ -150,13 +150,13 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
   const snap = await compareProduct(candidate);
   if (snap) {
     const srcLabel =
-      snap.coupangSource === 'observed' ? '쿠팡 실측(수집)' :
-      snap.coupangSource === 'partners-api' ? 'Coupang API 실측' : '벤치마크(합성)';
+      snap.coupangSource === 'observed' ? '실제 수집가' :
+      snap.coupangSource === 'partners-api' ? '쿠팡 공식 API' : '유사 상품 평균가';
     steps.push({
       step: 5,
       key: 'comparator.margin',
-      title: '⚖️ 쿠팡 판매자 추정 경제 분석',
-      detail: `이 상품을 파는 쿠팡 셀러의 추정 구조 — 판매가 ₩${snap.coupangPriceKrw.toLocaleString()} [${srcLabel}] − 수수료 ₩${snap.coupangFeeKrw.toLocaleString()} − 배송 ₩${snap.coupangShippingFeeKrw.toLocaleString()} = 순수익 ₩${snap.netRevenueKrw.toLocaleString()} · 원가(랜디드) ₩${snap.landedCostKrw.toLocaleString()} → 추정 마진 ₩${snap.marginKrw.toLocaleString()} (${snap.roiPercent}%)`,
+      title: '⚖️ 쿠팡 판매자 예상 수익 구조',
+      detail: `이 상품을 파는 쿠팡 셀러 기준으로 계산해 볼게요. 판매가 ₩${snap.coupangPriceKrw.toLocaleString()} [${srcLabel}]에서 쿠팡 수수료 ₩${snap.coupangFeeKrw.toLocaleString()}와 배송비 ₩${snap.coupangShippingFeeKrw.toLocaleString()}를 빼면 손에 남는 돈은 ₩${snap.netRevenueKrw.toLocaleString()}. 여기서 수입 원가 ₩${snap.landedCostKrw.toLocaleString()}(도매가+배송+관세)를 빼면, 예상 마진은 ₩${snap.marginKrw.toLocaleString()} (수익률 ${snap.roiPercent}%)예요.`,
       data: snap,
       durationMs: Date.now() - t0,
     });
@@ -174,12 +174,12 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
       })
     : [];
   steps.push({
-    step: 5,
+    step: 6,
     key: 'profile.routing',
-    title: '🎯 관심 프로파일 라우팅',
+    title: '🎯 어떤 셀러에게 맞는 상품인지',
     detail: matches.length > 0
-      ? matches.map((m) => `${m.profile.displayName} (score ${m.score})`).join(' · ')
-      : '매칭 프로파일 없음 (ROI 밴드/마진 기준 미달)',
+      ? matches.map((m) => `${m.profile.displayName} (적합도 ${m.score}점)`).join(' · ')
+      : '지금 기준에 맞는 셀러 유형이 없어요 (수익률·마진 기준 미달)',
     data: matches.map((m) => ({ profileId: m.profile.profileId, score: m.score, reasons: m.reasons })),
     durationMs: Date.now() - t0,
   });
@@ -201,17 +201,17 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
         })),
         recommendation:
           matches.length > 0 && snap.roiPercent >= 30
-            ? `✅ 소싱 추천 — ROI ${snap.roiPercent}%, 마진 ₩${snap.marginKrw.toLocaleString()}. ${matches[0].profile.displayName} 프로파일 적합.`
-            : `⚠️ 보류 — ROI ${snap.roiPercent}%는 프로파일 기준 미달입니다.`,
+            ? `✅ 들여오기 추천 — 수익률 ${snap.roiPercent}%, 개당 예상 마진 ₩${snap.marginKrw.toLocaleString()}. ${matches[0].profile.displayName} 유형에 딱 맞아요.`
+            : `⚠️ 이번엔 보류 — 수익률 ${snap.roiPercent}%는 기준에 못 미쳐요. 원가를 더 낮추거나 다른 상품을 보세요.`,
         challengeId: challenge.id,
         externalId: challenge.chargeRequest.externalId,
       }
     : null;
 
   steps.push({
-    step: 6,
+    step: 7,
     key: 'report.card',
-    title: '📋 소싱 리포트 생성',
+    title: '📋 최종 소싱 리포트',
     detail: report ? report.recommendation : '리포트 생성 불가 (마진 데이터 없음)',
     data: report,
   });
