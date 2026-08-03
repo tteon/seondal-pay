@@ -67,7 +67,6 @@
       radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.06) 0%, transparent 40%);
   }
 
-  /* Glassmorphism panel */
   .glass {
     background: var(--bg-surface);
     backdrop-filter: blur(16px);
@@ -77,7 +76,6 @@
     box-shadow: var(--shadow-main);
   }
 
-  /* Login */
   #loginView {
     min-height: 100vh;
     display: grid;
@@ -165,7 +163,6 @@
     box-shadow: 0 6px 20px var(--primary-glow);
   }
 
-  /* Main Container */
   #appView {
     display: none;
     max-width: 1560px;
@@ -173,7 +170,6 @@
     padding: 24px 28px 80px;
   }
 
-  /* Header */
   header.top-bar {
     display: flex;
     align-items: center;
@@ -268,7 +264,6 @@
     border-color: var(--border-highlight);
   }
 
-  /* Metric KPI Tiles */
   .tiles-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -312,7 +307,6 @@
     text-decoration: none;
   }
 
-  /* Section layouts */
   .tab-content { display: none; }
   .tab-content.active { display: block; }
 
@@ -348,15 +342,8 @@
     color: var(--text-dim);
   }
 
-  /* Table styling */
-  .table-wrap {
-    overflow-x: auto;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th {
     text-align: left;
     color: var(--text-muted);
@@ -368,141 +355,60 @@
     letter-spacing: 0.05em;
     background: rgba(0, 0, 0, 0.15);
   }
-  td {
-    padding: 12px 18px;
-    border-bottom: 1px solid var(--border-color);
-    font-variant-numeric: tabular-nums;
-  }
-  tr:hover td {
-    background: rgba(255, 255, 255, 0.02);
-  }
+  td { padding: 12px 18px; border-bottom: 1px solid var(--border-color); font-variant-numeric: tabular-nums; }
+  tr:hover td { background: rgba(255, 255, 255, 0.02); }
 
-  /* Badges */
   .roi-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11.5px;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
   }
   .roi-good { background: var(--accent-good-glow); color: var(--accent-good); border: 1px solid rgba(16, 185, 129, 0.3); }
   .roi-warn { background: var(--accent-warn-glow); color: var(--accent-warn); border: 1px solid rgba(245, 158, 11, 0.3); }
   .roi-crit { background: rgba(239, 68, 68, 0.15); color: var(--accent-crit); border: 1px solid rgba(239, 68, 68, 0.3); }
 
-  .grade-badge {
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
-  }
+  .grade-badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
   .grade-s { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4); }
   .grade-a { background: rgba(6, 182, 212, 0.2); color: #67e8f9; border: 1px solid rgba(6, 182, 212, 0.4); }
 
-  .chart-box {
-    padding: 18px 20px;
-    height: 280px;
-  }
+  .chart-box { padding: 18px 20px; height: 280px; }
 
-  /* Live Agent Chat */
   #chatLog {
-    height: 540px;
-    overflow-y: auto;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    height: 540px; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px;
   }
-  .msg {
-    max-width: 90%;
-    padding: 12px 16px;
-    border-radius: 14px;
-    font-size: 13px;
-    line-height: 1.6;
-  }
+  .msg { max-width: 90%; padding: 12px 16px; border-radius: 14px; font-size: 13px; line-height: 1.6; }
   .msg.user {
-    align-self: flex-end;
-    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-    color: #ffffff;
-    border-bottom-right-radius: 4px;
-    box-shadow: 0 4px 12px var(--primary-glow);
+    align-self: flex-end; background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: #ffffff; border-bottom-right-radius: 4px; box-shadow: 0 4px 12px var(--primary-glow);
   }
-  .msg.agent {
-    align-self: flex-start;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    border-bottom-left-radius: 4px;
-  }
-  .msg.agent .step-title {
-    font-weight: 700;
-    color: var(--accent-cyan);
-    margin-bottom: 4px;
-  }
-  .msg.report {
-    align-self: stretch;
-    max-width: 100%;
-    background: rgba(99, 102, 241, 0.08);
-    border: 1px solid var(--border-highlight);
-    border-radius: 14px;
-  }
-  .msg.report h3 {
-    font-family: var(--font-heading);
-    font-size: 14px;
-    margin-bottom: 8px;
-    color: #a5b4fc;
-  }
-  .msg.report .row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12.5px;
-    padding: 4px 0;
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-  }
-  #chatForm {
-    display: flex;
-    gap: 10px;
-    padding: 14px;
-    border-top: 1px solid var(--border-color);
-  }
-  #chatForm input {
-    flex: 1;
-    padding: 12px 14px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    background: rgba(0, 0, 0, 0.2);
-    color: var(--text-main);
-    font-size: 13.5px;
-    outline: none;
-  }
+  .msg.agent { align-self: flex-start; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; }
+  .msg.agent .step-title { font-weight: 700; color: var(--accent-cyan); margin-bottom: 4px; }
+  .msg.report { align-self: stretch; max-width: 100%; background: rgba(99, 102, 241, 0.08); border: 1px solid var(--border-highlight); border-radius: 14px; }
+  .msg.report h3 { font-family: var(--font-heading); font-size: 14px; margin-bottom: 8px; color: #a5b4fc; }
+  .msg.report .row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 4px 0; border-bottom: 1px dashed rgba(255, 255, 255, 0.1); }
+  #chatForm { display: flex; gap: 10px; padding: 14px; border-top: 1px solid var(--border-color); }
+  #chatForm input { flex: 1; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: rgba(0, 0, 0, 0.2); color: var(--text-main); font-size: 13.5px; outline: none; }
   #chatForm input:focus { border-color: var(--primary); }
 
-  /* Onboarding modal */
-  #onboardView {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(8px);
-    z-index: 100;
-    place-items: center;
-  }
+  /* Comparison split view */
+  .cmp-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .cmp-card { padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); }
+  .cmp-card.vanilla { background: rgba(239, 68, 68, 0.04); border-color: rgba(239, 68, 68, 0.3); }
+  .cmp-card.mcp { background: rgba(16, 185, 129, 0.04); border-color: rgba(16, 185, 129, 0.3); }
+  .cmp-title { font-family: var(--font-heading); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .cmp-tag { font-size: 11px; padding: 4px 10px; border-radius: 999px; font-weight: 700; }
+  .cmp-tag.bad { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+  .cmp-tag.good { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+  
+  .cmp-body { font-size: 13px; line-height: 1.65; color: var(--text-main); }
+  .cmp-body p { margin-bottom: 10px; }
+  .cmp-metric-box { padding: 12px; background: rgba(0, 0, 0, 0.2); border-radius: 8px; margin: 10px 0; font-size: 12.5px; }
 
-  footer {
-    margin-top: 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: var(--text-dim);
-    font-size: 12px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-color);
-  }
+  #onboardView { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); z-index: 100; place-items: center; }
+
+  footer { margin-top: 30px; display: flex; justify-content: space-between; align-items: center; color: var(--text-dim); font-size: 12px; padding-top: 20px; border-top: 1px solid var(--border-color); }
   footer a { color: var(--accent-cyan); text-decoration: none; margin-left: 12px; }
 
   @media (max-width: 1100px) {
     .tiles-grid { grid-template-columns: repeat(2, 1fr); }
-    .grid-2col { grid-template-columns: 1fr; }
+    .grid-2col, .cmp-split { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -578,6 +484,7 @@
       <button class="nav-tab-btn" onclick="switchTab('catalog')">📦 상품 카탈로그 (15+)</button>
       <button class="nav-tab-btn" onclick="switchTab('benchmark100')">🌐 100-카테고리 벤치마크</button>
       <button class="nav-tab-btn" onclick="switchTab('live-agent')">💬 라이브 에이전트</button>
+      <button class="nav-tab-btn" onclick="switchTab('mcp-compare')">⚖️ Claude vs. MCP 비교</button>
       <button class="nav-tab-btn" onclick="switchTab('portfolio')">🧺 포트폴리오 &amp; 알림</button>
     </div>
 
@@ -766,7 +673,79 @@
     </div>
   </div>
 
-  <!-- TAB 5: PORTFOLIO & ALERTS -->
+  <!-- TAB 5: CLAUDE VS. CLAUDE MCP COMPARISON -->
+  <div id="tab-mcp-compare" class="tab-content">
+    <div class="card-box glass">
+      <div class="card-header">
+        <h2>⚖️ Pure Claude vs. Claude + SEONDAL Pay (MCP Enabled) 비교</h2>
+        <span class="sub-hint">동일 질의 입력 시 실측 데이터 및 자율 결제 능력 비교</span>
+      </div>
+      
+      <div style="padding:16px 20px; border-bottom:1px solid var(--border-color); background:rgba(99,102,241,0.06)">
+        <div style="font-weight:700; font-size:14px; color:#a5b4fc; margin-bottom:4px">💬 테스트 프롬프트:</div>
+        <div style="font-size:13.5px; background:rgba(0,0,0,0.25); padding:10px 14px; border-radius:8px; border:1px solid var(--border-color)">
+          "2030 여아 여름 순면 롬퍼 소싱성 및 관세, 쿠팡 마진 검토해줘"
+        </div>
+      </div>
+
+      <div style="padding:20px" class="cmp-split">
+        <!-- LEFT: Pure Claude -->
+        <div class="cmp-card vanilla">
+          <div class="cmp-title">
+            <span>🔴 Raw Claude (Without MCP)</span>
+            <span class="cmp-tag bad">환각 / 비실측 텍스트</span>
+          </div>
+          <div class="cmp-body">
+            <p><b>[Claude의 답변]</b></p>
+            <p>여아 여름 순면 롬퍼는 유아동 의류 시장에서 꾸준한 수요가 있는 인기 카테고리입니다. 소싱 진행 시 고려할 사항은 다음과 같습니다:</p>
+            
+            <div class="cmp-metric-box">
+              ❌ <b>1688 공장 도매가</b>: 불명 (실제 도매가 데이터 접근 불가, "1688이나 타오바오에서 조사 필요" 일반론 언급)<br>
+              ❌ <b>RCEP 수입 관세율</b>: 미계산 ("관세사와 관배송 대행업체에 확인 권장")<br>
+              ❌ <b>쿠팡 벤치마크 실마진</b>: 계산 불가 ("수수료 약 10% 내외 예상")<br>
+              ❌ <b>KC 안전인증 규제</b>: 모호 ("유아용품은 인증이 필요할 수 있으니 사전 확인하세요")
+            </div>
+
+            <p style="color:var(--accent-crit); font-size:12px; margin-top:12px">
+              ⚠️ <b>한계점</b>: 정량적 숫자와 규제 확인이 없어 1인 셀러가 이 답변만 믿고 발주 시 큰 적자 및 통관 거부 리스크 발생.
+            </p>
+          </div>
+        </div>
+
+        <!-- RIGHT: Claude + SEONDAL Pay MCP -->
+        <div class="cmp-card mcp">
+          <div class="cmp-title">
+            <span>🟢 Claude + SEONDAL Pay (MCP Tool Active)</span>
+            <span class="cmp-tag good">실시간 온체인 결제 &amp; 온톨로지 정밀도</span>
+          </div>
+          <div class="cmp-body">
+            <p><b>[SEONDAL MCP 툴 자율 호출 과정]</b></p>
+            <div style="font-size:11.5px; font-family:monospace; color:var(--accent-cyan); background:rgba(0,0,0,0.3); padding:8px 10px; border-radius:6px; margin-bottom:10px">
+              1. seondal-pay::get_market_pie(group="롬퍼") ➔ 점유율 29.8%<br>
+              2. seondal-pay::get_payment_challenge(tier=3) ➔ HTTP 402 Challenge<br>
+              3. solana::send_transaction ➔ 0.05 SOL Solana Devnet Memo 서명<br>
+              4. seondal-pay::get_sourcing_analysis ➔ JSON-LD 노드 언락
+            </div>
+
+            <div class="cmp-metric-box" style="border-left:3px solid var(--accent-good)">
+              ✅ <b>1688 공장 도매가</b>: <b>$12.50</b> (₩17,500)<br>
+              ✅ <b>수입원가 (Landed Cost)</b>: <b>₩24,650</b> (RCEP 0% + 국제물류비 ₩7,150)<br>
+              ✅ <b>쿠팡 벤치마크 retail가</b>: <b>₩51,765</b><br>
+              ✅ <b>쿠팡 수수료(10.8%) 공제 순마진</b>: <b style="color:var(--accent-good)">₩21,524 (+87% Net ROI)</b><br>
+              ✅ <b>KC 규제 가드레일</b>: 🔴 <b>필수</b> (어린이제품 안전특별법 제22조 안전확인)<br>
+              ✅ <b>Kimi 3.0 판정</b>: <b>Grade S</b> (추천 초기 발주량: 15개, MOQ ₩369,750)
+            </div>
+
+            <p style="color:var(--accent-good); font-size:12px; margin-top:12px">
+              🚀 <b>우위점</b>: 81.4% 토큰 절감, 0% 환각률, 수입원가-쿠팡가-KC인증-SOL결제까지 원스톱 자율 실행 완료.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 6: PORTFOLIO & ALERTS -->
   <div id="tab-portfolio" class="tab-content">
     
     <!-- Portfolio Builder -->

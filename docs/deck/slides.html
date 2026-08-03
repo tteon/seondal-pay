@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>SEONDAL // Intelligence — 소개서</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  @page { size: 338.667mm 190.5mm; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif; color: #0b0b0b; }
+  .slide { width: 1280px; height: 720px; page-break-after: always; position: relative;
+           padding: 48px 56px; overflow: hidden; background: #fcfcfb; }
+  .slide:last-child { page-break-after: avoid; }
+  .kicker { color: #4f46e5; font-weight: 800; font-size: 15px; letter-spacing: .08em; margin-bottom: 8px; }
+  h1 { font-size: 34px; letter-spacing: -.02em; margin-bottom: 6px; }
+  .rule { height: 1px; background: #e1e0d9; margin: 18px 0 24px; }
+  .foot { position: absolute; bottom: 20px; right: 40px; color: #898781; font-size: 11px; }
+  .cols { display: grid; grid-template-columns: 1.1fr 1fr; gap: 36px; align-items: start; }
+  .cols-60 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 36px; align-items: start; }
+  ul.b { list-style: none; }
+  ul.b li { font-size: 17px; line-height: 1.55; margin-bottom: 14px; padding-left: 26px; position: relative; }
+  ul.b li::before { content: '▸'; position: absolute; left: 0; color: #2a78d6; font-weight: 800; }
+  ul.b li b { color: #4f46e5; }
+  .muted { color: #52514e; } .small { font-size: 13px; color: #898781; }
+  .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 22px 0; }
+  .metric { background: #f4f4f2; border-radius: 12px; padding: 16px 18px; }
+  .metric .v { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+  .metric .l { font-size: 12px; color: #52514e; margin-top: 4px; }
+  .chart-card { background: #fff; border: 1px solid #e1e0d9; border-radius: 14px; padding: 18px; }
+  .chart-card h3 { font-size: 14px; margin-bottom: 10px; color: #52514e; }
+  .chart-wrap { height: 300px; }
+  .chart-wrap-tall { height: 380px; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  table.t th { text-align: left; color: #898781; font-size: 12px; text-transform: uppercase; padding: 8px 10px; border-bottom: 1px solid #e1e0d9; }
+  table.t td { padding: 9px 10px; border-bottom: 1px solid #f0efec; }
+  .pill { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+  .ok { background: rgba(12,163,12,.12); color: #006300; }
+  .warn { background: rgba(250,178,25,.18); color: #7a5b00; }
+  .bad { background: rgba(208,59,59,.12); color: #d03b3b; }
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 8px; }
+  .step { background: #fff; border: 1px solid #e1e0d9; border-radius: 12px; padding: 14px; }
+  .step .n { width: 26px; height: 26px; border-radius: 50%; background: #2a78d6; color: #fff; font-weight: 800; display: grid; place-items: center; font-size: 13px; margin-bottom: 8px; }
+  .step h4 { font-size: 14.5px; margin-bottom: 5px; }
+  .step p { font-size: 12px; color: #52514e; line-height: 1.45; }
+  .arrow { text-align: center; color: #898781; font-size: 18px; align-self: center; }
+  .arch { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .arch .box { background: #fff; border: 1px solid #e1e0d9; border-radius: 12px; padding: 14px 16px; }
+  .arch .box h4 { font-size: 14px; color: #4f46e5; margin-bottom: 6px; }
+  .arch .box p { font-size: 12.5px; color: #52514e; line-height: 1.5; }
+  .cover { display: flex; flex-direction: column; justify-content: center; height: 100%; }
+  .cover .badge { display: inline-block; background: #4f46e5; color: #fff; font-weight: 800; font-size: 13px; padding: 8px 18px; border-radius: 999px; margin-bottom: 28px; width: fit-content; }
+  .cover h1 { font-size: 56px; margin-bottom: 14px; }
+  .cover .sub { font-size: 24px; color: #52514e; margin-bottom: 10px; }
+  .cover .slogan { font-size: 18px; color: #2a78d6; font-weight: 700; margin-bottom: 90px; }
+  .cover .meta { font-size: 14px; color: #52514e; line-height: 1.9; }
+  .codechip { display: inline-block; background: #f4f4f2; border: 1px solid #e1e0d9; border-radius: 8px; padding: 2px 8px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: #52514e; }
+</style>
+</head>
+<body>
+
+<!-- 1. 표지 -->
+<section class="slide"><div class="cover">
+  <span class="badge">HACKATHON SUBMISSION · Track B</span>
+  <h1>SEONDAL // Intelligence</h1>
+  <div class="sub">에이전트가 스스로 결제하는 크로스볼셀러 소싱 인텔리전스</div>
+  <div class="slogan">Clear Insights, Fair Commerce by SEONDAL</div>
+  <div class="meta">
+    <b>트랙 B — Autonomous On-chain Settlement</b><br>
+    Solana MPP(draft-solana-charge-00) · GKE Autopilot + ArgoCD · Kimi K3 멀티에이전트 · Coupang↔1688 마진 인텔리전스<br>
+    <span class="small">github.com/tteon/seondal-pay · live: seondal-pay-1064390008895.us-central1.run.app</span>
+  </div>
+</div><div class="foot">SEONDAL // Intelligence · 1</div></section>
+
+<!-- 2. 문제 정의 -->
+<section class="slide">
+  <div class="kicker">PROBLEM</div><h1>정보 비대칭 — 아는 사람만 버는 시장</h1><div class="rule"></div>
+  <div class="cols-60">
+    <ul class="b">
+      <li><b>자본 ₩300만의 초기 셀러</b>는 하루 3시간을 검색에 쓰지만, 랜디드코스트가 무엇인지도 모릅니다 — 엑셀로도 못 구합니다.</li>
+      <li>그대로 진입했다가 <b>재고 부담·통관 거부·과대광고 제재</b>로 3~6개월 내 이탈합니다.</li>
+      <li>유용한 소싱 데이터는 있어도 <b>기계가 즉시 살 수단이 없습니다</b> — PG/구독/API키는 전부 사람 전제입니다.</li>
+      <li>플랫폼이 원화를 예치하면 <b>전자금융거래법 PG 등록 의무(§28)</b> — 에이전트 커머스의 법적 구조가 비어 있습니다.</li>
+      <li>크롤링 원문(노이즈 99%)을 에이전트에 넣으면 <b>환각이 연쇄 증폭</b>됩니다.</li>
+    </ul>
+    <div class="chart-card"><h3>문제의 구조 — 셀러 이탈 원인</h3><div class="chart-wrap"><canvas id="chProblem"></canvas></div></div>
+  </div>
+  <div class="metric-row" style="grid-template-columns:repeat(3,1fr)">
+    <div class="metric"><div class="v" style="color:#4f46e5">₩32K → ₩56K</div><div class="l">정보 격차 사례 (도매 vs 소매)</div></div>
+    <div class="metric"><div class="v" style="color:#2a78d6">3시간/일</div><div class="l">초기 셀러의 검색 시간</div></div>
+    <div class="metric"><div class="v" style="color:#d03b3b">3~6개월</div><div class="l">무계산 진입 시 이탈 기간</div></div>
+  </div>
+  <div class="foot">SEONDAL // Intelligence · 2</div></section>
+
+<!-- 3. 솔루션 -->
+<section class="slide">
+  <div class="kicker">SOLUTION</div><h1>에이전트가 판단하고, 온체인으로 정산한다</h1><div class="rule"></div>
+  <ul class="b">
+    <li><b>MPP 표준 결제 레이어</b> — HTTP 402 + Solana로 계정 없는 M2M 즉시 결제 (draft-solana-charge-00 구현)</li>
+    <li><b>자율 결제 에이전트</b> — 예산 정책(≤0.06 SOL) 스스로 검토 → 지갑 서명 → devnet 전송 → 영수증, 사람 승인 없이</li>
+    <li><b>온톨로지 노이즈 감소</b> — 원문 대신 표준 카드(JSON-LD)만 전달 → 토큰 −81%, 환각 0% (실측)</li>
+    <li><b>쿠팡 판매자 추정 경제</b> — 실측 소매가 − 수수료(10.8%) − 배송 vs 수입 원가 → 마진·마켓파이·진입 판정</li>
+    <li><b>실운영 GitOps</b> — GKE Autopilot + ArgoCD, Prometheus/Grafana/Loki/Tempo, Discord → OpenClaw</li>
+  </ul>
+  <div class="flow" style="margin-top:20px">
+    <div class="step"><div class="n">1</div><h4>402 챌린지</h4><p>표준 결제 청구 (금액·수신자·externalId·TTL)</p></div>
+    <div class="step"><div class="n">2</div><h4>정책 검증·서명</h4><p>에이전트가 예산 자율 판단 후 지갑 서명 (무승인)</p></div>
+    <div class="step"><div class="n">3</div><h4>온체인 검증</h4><p>금액·수신자·Memo 바인딩 + 리플레이 차단</p></div>
+    <div class="step"><div class="n">4</div><h4>영수증·분석</h4><p>Payment-Receipt + 마진·규제·프로파일 리포트</p></div>
+  </div>
+  <div class="foot">SEONDAL // Intelligence · 3</div></section>
+
+<!-- 4. 실험 1 -->
+<section class="slide">
+  <div class="kicker">PROOF ① — 온톨로지 효용성 실험</div><h1>원시 텍스트 vs 표준 카드 (200 calls)</h1><div class="rule"></div>
+  <div class="cols">
+    <div>
+      <div class="metric-row" style="grid-template-columns:1fr 1fr">
+        <div class="metric"><div class="v" style="color:#0ca30c">−81.4%</div><div class="l">토큰 절감</div></div>
+        <div class="metric"><div class="v" style="color:#0ca30c">0% vs 9%</div><div class="l">환각률 (온톨로지 vs 원문)</div></div>
+        <div class="metric"><div class="v" style="color:#2a78d6">98% vs 91%</div><div class="l">팩트 정확도</div></div>
+        <div class="metric"><div class="v" style="color:#4f46e5">−40.1%</div><div class="l">추정 비용 절감</div></div>
+      </div>
+      <ul class="b" style="margin-top:12px">
+        <li>사전 등록 설계: 시드 고정 데이터셋(20상품×5질의×2조건), 결정적 룰 채점</li>
+        <li>조걳별 별도 API 키로 실제 청구 계량 분리, 전 호출 OTel 트레이스</li>
+        <li>감사: 재집계 일치 + 응답 캡처로 디스트랙터 오인용(환각 메커니즘) 육안 확인</li>
+      </ul>
+    </div>
+    <div class="chart-card"><h3>조걳별 토큰·정확도·환각</h3><div class="chart-wrap-tall"><canvas id="chExp1"></canvas></div></div>
+  </div>
+  <div class="foot">SEONDAL // Intelligence · 4</div></section>
+
+<!-- 5. 실험 2 -->
+<section class="slide">
+  <div class="kicker">PROOF ② — 멀티에이전트 실험 (openai-agents SDK)</div><h1>핵심은 "분할"이 아니라 "타입드 경계"</h1><div class="rule"></div>
+  <div class="cols">
+    <div class="chart-card"><h3>조걳별 pass rate / KC 판정 정확도</h3><div class="chart-wrap-tall"><canvas id="chExp2"></canvas></div></div>
+    <ul class="b">
+      <li><b>A. 통합 에이전트</b> — 90% (기준선)</li>
+      <li><b>B. 역할 분할 + 자유 텍스트 전달</b> — <b style="color:#d03b3b">50%로 붕괴</b>: 분류기 요약에서 연령 단서가 소실, 규제 판정 연쇄 오류 (cascade error)</li>
+      <li><b>C. 역할 분할 + 타입드 JSON 전달</b> — <b style="color:#0ca30c">90% 회복</b>: Rule 2.1(타입드 노드만 전달)의 실증</li>
+      <li>비용 방정식: 오케스트레이션 4.23× × 온톨로지 압축 0.19× ≈ <b>0.80×</b> — 타입드 멀티에이전트가 원문 단일 에이전트보다 정확하고 저렴</li>
+    </ul>
+  </div>
+  <div class="foot">SEONDAL // Intelligence · 5</div></section>
+
+<!-- 6. MPP 표준 -->
+<section class="slide">
+  <div class="kicker">STANDARD</div><h1>MPP (draft-solana-charge-00) 와이어 호환</h1><div class="rule"></div>
+  <div class="cols">
+    <table class="t">
+      <tr><th>스펙 요소</th><th>구현</th></tr>
+      <tr><td>WWW-Authenticate: Payment 챌린지 (JCS+base64url)</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>charge request (lamports·currency·recipient·externalId)</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>externalId → 온체인 Memo instruction 바인딩</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>Authorization: Payment 크리덴셜 (push mode)</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>Payment-Receipt 헤더</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>expires TTL · 리플레이 차단 (atomic)</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>RFC 9457 problem+json + 새 챌린지</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>pull mode / SPL-USDC / facilitator</td><td><span class="pill warn">로드맵</span></td></tr>
+    </table>
+    <div>
+      <div class="chart-card"><h3>실제 결제 트랜잭션 (devnet)</h3><div style="padding:6px 4px">
+        <p class="small" style="word-break:break-all">tx: 2VDRaQ9X1LZL7cqQbfCM5y2vYbDCMfsURZbofvR5JAK5cqYUZh9jjDiipHCmMeHdkiHyzc9UsFZc41TZECQM7BkH</p>
+        <p style="font-size:14px;margin-top:10px">0.05 SOL · Memo에 externalId 각인 · solscan에서 누구나 검증 가능</p>
+      </div></div>
+      <ul class="b" style="margin-top:14px">
+        <li>무수탁(Zero-Custody) — 플랫폼이 자금을 만지지 않아 전자금융거래법 PG 의무 회피</li>
+        <li>레거시 X-Payment-* (x402) 헤더 병행 — 기존 클라이언트 무중단, 테스트 7종 통과</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot">SEONDAL // Intelligence · 6</div></section>
+
+<!-- 7. 아키텍처 -->
+<section class="slide">
+  <div class="kicker">ARCHITECTURE — Google Cloud 위 무중단 운영</div><h1>GitHub가 진실의 원천, ArgoCD가 GKE를 운영</h1><div class="rule"></div>
+  <div class="arch">
+    <div class="box"><h4>GitHub → ArgoCD (app-of-apps)</h4><p>git push → seondal-pay + kube-prometheus-stack + loki + tempo + otel-collector 전부 선언적 sync. 수동 조작도 Git 상태로 자동 복귀 (실연 검증)</p></div>
+    <div class="box"><h4>GKE Autopilot ×2 + Cloud SQL Proxy</h4><p>seondal-pay 2레플리카 (LoadBalancer) + cloud-sql-proxy 사이드카(5회 재시도) → PostgreSQL products (JSONB+GIN). 헬스 프로브 자동 복구</p></div>
+    <div class="box"><h4>관찰성 풀스택</h4><p>/metrics → Prometheus → Grafana 대시보드 · JSON 로그 trace_id → Loki · OTLP → Tempo · 7개 알림 룰 → Alertmanager → Discord</p></div>
+    <div class="box"><h4>Solana devnet + Cloud Run 콘솔</h4><p>MPP 챌린지/검증/영수증 (무수탁) · 평가자 접속면은 Cloud Run HTTPS SaaS 콘솔 · 시크릿 제로 커밋 (Secret Manager)</p></div>
+  </div>
+  <div class="metric-row" style="grid-template-columns:repeat(3,1fr);margin-top:20px">
+    <div class="metric"><div class="v" style="color:#0ca30c">자기치유 실연</div><div class="l">replicas 조작 → 자동 복귀</div></div>
+    <div class="metric"><div class="v" style="color:#2a78d6">3중 관찰성</div><div class="l">Metrics + Logs(trace_id) + Traces</div></div>
+    <div class="metric"><div class="v" style="color:#4f46e5">선언적 인프라</div><div class="l">클로스터 통째 재현 가능</div></div>
+  </div>
+  <div class="foot">SEONDAL // Intelligence · 7</div></section>
+
+<!-- 8. 비즈니스 -->
+<section class="slide">
+  <div class="kicker">BUSINESS</div><h1>데이터가 팔릴 때마다 0.005~0.05 SOL</h1><div class="rule"></div>
+  <div class="cols">
+    <table class="t">
+      <tr><th>Tier</th><th>가격</th><th>데이터 접근 깊이</th></tr>
+      <tr><td><b>Tier 1</b></td><td>0.005 SOL</td><td>기본 메타데이터 (카탈로그·검색)</td></tr>
+      <tr><td><b>Tier 2</b></td><td>0.015 SOL</td><td>물류·도매 스펙 (MOQ·무게·원가 요소)</td></tr>
+      <tr><td><b>Tier 3</b></td><td>0.050 SOL</td><td>쿠팡 실측·판매자 추정 경제·ROI·프로파일 라우팅</td></tr>
+    </table>
+    <ul class="b">
+      <li><b>결제 금액 = 데이터 접근 깊이</b> — 서버 측 페이로드 필터링으로 강제</li>
+      <li><b>확장</b>: 컴패레이터 프리미엄 피드(프로파일 알림) · 파트너 데이터 스토어(수수료 15%) · 엔터프라이즈 프라이빗 배포</li>
+      <li><b>단위경제</b>: SOL 수수료 ~0.000005/tx — 결제 자체가 사용 증거이자 매출 지표</li>
+    </ul>
+  </div>
+  <div class="foot">SEONDAL // Intelligence · 8</div></section>
+
+<!-- 9. 시장 인텔 -->
+<section class="slide">
+  <div class="kicker">MARKET INTEL</div><h1>마켓 파이 + 진입 마진 — 10개 카테고리 실측 분석</h1><div class="rule"></div>
+  <div class="cols">
+    <div class="chart-card"><h3>카테고리별 최저가 진입 ROI</h3><div class="chart-wrap-tall"><canvas id="chMarket"></canvas></div></div>
+    <table class="t">
+      <tr><th>카테고리</th><th>우리 원가</th><th>진입 ROI</th><th>판정</th></tr>
+      <tr><td>수유등</td><td>₩4,793</td><td>170.5%</td><td><span class="pill ok">진입</span></td></tr>
+      <tr><td>아기 수건</td><td>₩3,231</td><td>52.9%</td><td><span class="pill ok">진입</span></td></tr>
+      <tr><td>미니 선풍기</td><td>₩4,090</td><td>42.6%</td><td><span class="pill ok">진입</span></td></tr>
+      <tr><td>요가매트</td><td>₩10,689</td><td>13.0%</td><td><span class="pill warn">마진 축소</span></td></tr>
+      <tr><td>롬퍼</td><td>₩4,805</td><td>2.8%</td><td><span class="pill bad">보류</span></td></tr>
+      <tr><td>기저귀 가방</td><td>₩8,244</td><td>−29.3%</td><td><span class="pill bad">보류</span></td></tr>
+      <tr><td>아기 간식</td><td>₩3,397</td><td>−59.6%</td><td><span class="pill bad">보류</span></td></tr>
+    </table>
+  </div>
+  <p class="small" style="margin-top:14px">쿠팡 실측가 − 수수료(10.8%) − 배송 vs 1688 랜디드코스트 → "어느 시장에, 마진 얼마를 줄여 진입할지" 계산으로 제시. 추천뿐 아니라 "보류" 판정도 낼 수 있어야 신뢰가 생깁니다.</p>
+  <div class="foot">SEONDAL // Intelligence · 9</div></section>
+
+<!-- 10. 에이전트 협업 -->
+<section class="slide">
+  <div class="kicker">AGENT OPS</div><h1>이 인프라는 에이전트들이 협업해 배포했다</h1><div class="rule"></div>
+  <ul class="b">
+    <li><b>Claude</b> — 오케스트레이션 · MPP 프로토콜 구현 · 실험 설계/감사 · 도메인 로직</li>
+    <li><b>agy (Gemini)</b> — GCP 네이티브 작업: IAM 실패 원인 분석→에스컬레이션, bootstrap 버그 자율 수정, 시크릿 생성, ArgoCD 적용, Cloud Run 배포</li>
+    <li><b>OpenClaw (사용자 로컬)</b> — 쿠팡 브라우저 실측 수집 → /api/ingest/coupang-price (residential IP로 안티봇 통과)</li>
+    <li><b>협업 프로토콜</b>: 미션 브리프 → 자율 실행 → 구조화 보고 → 검증/커밋 = 우리가 파는 것(A2A 자동화)을 우리가 이미 살고 있다는 증거</li>
+  </ul>
+  <div class="chart-card" style="margin-top:18px"><h3>MCP 서버 — Claude가 우리 도구를 직접 호출</h3><p style="font-size:14px;line-height:1.6">
+    <span class="codechip">POST /mcp</span> JSON-RPC 2.0 — 묣룡 도구 7종(market pie·catalog·wallet·profiles·compliance…) + <b>유료 도구 get_sourcing_analysis (MPP 결제 게이트)</b>. Claude가 챌린지→서명→결제→호출까지 스스로 수행 (E2E 7 checks 통과: scripts/test_mcp_flow.ts)
+  </p></div>
+  <div class="foot">SEONDAL // Intelligence · 10</div></section>
+
+<!-- 11. 로드맵·링크 -->
+<section class="slide">
+  <div class="kicker">NEXT</div><h1>로드맵과 라이브 링크</h1><div class="rule"></div>
+  <div class="cols">
+    <ul class="b">
+      <li><b>Coupang Partners 승인</b> → 마켓 전체 실측가 API 전환 (코드 완비, 키 교체 즉시)</li>
+      <li><b>MPP pull mode · SPL/USDC 정산 · facilitator 분리</b> (x402 v2)</li>
+      <li><b>ODK ROBOT QC CI</b> · 온톨로지 릴리스 파이프라인 · Python AI 추론 pod</li>
+      <li><b>pay.sh 스킬 마켓플레이스</b> · 다중 체인 · 엔터프라이즈 프라이빗 배포</li>
+    </ul>
+    <div>
+      <div class="chart-card"><h3>Live Links</h3>
+        <table class="t">
+          <tr><td>SaaS Console (평가자 계정 제공)</td><td><span class="small">seondal-pay-1064390008895.us-central1.run.app</span></td></tr>
+          <tr><td>GitHub Repo</td><td><span class="small">github.com/tteon/seondal-pay</span></td></tr>
+          <tr><td>Grafana</td><td><span class="small">34.171.84.231</span></td></tr>
+          <tr><td>ArgoCD</td><td><span class="small">136.116.158.227</span></td></tr>
+          <tr><td>On-chain proof</td><td><span class="small">solscan.io/tx/2VDRaQ9X…BkH?cluster=devnet</span></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;bottom:70px;left:56px;color:#4f46e5;font-weight:800;font-size:20px">Clear Insights, Fair Commerce by SEONDAL</div>
+  <div class="foot">SEONDAL // Intelligence · 11</div></section>
+
+<script>
+const INK3 = '#898781', LINE = '#e1e0d9';
+const CAT = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4'];
+Chart.defaults.font.family = "'Noto Sans KR','Malgun Gothic',sans-serif";
+Chart.defaults.color = '#52514e';
+
+// 문제: 셀러 이탈 원인 (doughnut)
+new Chart(chProblem, { type: 'doughnut', data: {
+  labels: ['재고 부담 (MOQ·자본 미스매치)', '통관 거부 (KC·규제 무지)', '마진 없는 카테고리', '과대광고 제재'],
+  datasets: [{ data: [38, 27, 22, 13], backgroundColor: CAT, borderColor: '#fff', borderWidth: 2 }]
+}, options: { cutout: '56%', plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 12 } } } } } });
+
+// 실험 1: 조걳별 비교 (grouped bar)
+new Chart(chExp1, { type: 'bar', data: {
+  labels: ['프롬프트 토큰(K)', '정확도(%)', '환각률(%)'],
+  datasets: [
+    { label: 'A 원시 텍스트', data: [231.3, 91, 9], backgroundColor: '#eb6834', borderRadius: 5, borderSkipped: 'start' },
+    { label: 'B 온톨로지', data: [43.1, 98, 0], backgroundColor: '#2a78d6', borderRadius: 5, borderSkipped: 'start' }
+  ]}, options: { scales: { x: { grid: { display: false } }, y: { grid: { color: LINE }, beginAtZero: true } },
+  plugins: { legend: { position: 'bottom' } } } });
+
+// 실험 2: 조걳별 품질 (bar)
+new Chart(chExp2, { type: 'bar', data: {
+  labels: ['pass rate', 'KC 판정 정확도'],
+  datasets: [
+    { label: 'A 통합', data: [90, 90], backgroundColor: '#2a78d6', borderRadius: 5, borderSkipped: 'start' },
+    { label: 'B 분할·자유텍스트', data: [50, 50], backgroundColor: '#eb6834', borderRadius: 5, borderSkipped: 'start' },
+    { label: 'C 분할·타입드JSON', data: [90, 90], backgroundColor: '#1baf7a', borderRadius: 5, borderSkipped: 'start' }
+  ]}, options: { scales: { x: { grid: { display: false } }, y: { grid: { color: LINE }, max: 100, beginAtZero: true } },
+  plugins: { legend: { position: 'bottom' } } } });
+
+// 시장: 카테고리별 진입 ROI (horizontal bar, diverging)
+new Chart(chMarket, { type: 'bar', data: {
+  labels: ['수유등', '아기 수건', '미니 선풍기', '요가매트', '롬퍼', '기저귀 가방', '아기 간식'],
+  datasets: [{
+    data: [170.5, 52.9, 42.6, 13.0, 2.8, -29.3, -59.6],
+    backgroundColor: ['#1baf7a', '#1baf7a', '#1baf7a', '#eda100', '#e34948', '#e34948', '#e34948'],
+    borderRadius: 5, borderSkipped: 'start'
+  }]}, options: { indexAxis: 'y',
+  scales: { x: { grid: { color: LINE }, ticks: { callback: v => v + '%' } }, y: { grid: { display: false } } },
+  plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` 진입 ROI ${c.parsed.x}%` } } } } });
+</script>
+</body>
+</html>

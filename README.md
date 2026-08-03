@@ -105,8 +105,45 @@ npx ts-node src/agent.ts
 PORT=3000 MPP_CHALLENGE_TTL_SECONDS=6 npx ts-node src/server.ts &
 npx ts-node scripts/test_mpp_flow.ts
 
+# MCP server E2E: initialize → tools/list → free tool → pay → paid tool → replay
+npx ts-node scripts/test_mcp_flow.ts
+
 # Devnet-path memo decoding unit check
 npx ts-node scripts/test_memo_decode.ts
+
+# One real MPP payment against the live service (mock-RPC path)
+BASE_URL=http://localhost:3000 npx ts-node scripts/live_payment_once.ts
+```
+
+### Market pie & margin demo (10 categories)
+
+```bash
+# server must be running — seeds 50 Coupang observations, prints pies + entry verdicts
+BASE_URL=http://localhost:3000 npx ts-node scripts/demo_market_pie_10cats.ts
+
+# then explore:
+curl "http://localhost:3000/api/market-pie?group=수유등"
+curl -X POST http://localhost:3000/api/market-pie/entry \
+  -H 'Content-Type: application/json' \
+  -d '{"group":"수유등","landedCostKrw":4793,"targetRoiPct":30}'
+```
+
+### Experiments (Kimi K3, needs keys in `.env`)
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install openai-agents opentelemetry-sdk \
+  opentelemetry-exporter-otlp-proto-http python-dotenv
+# .env: KIMI_KEY_NON_ONTOLOGY / KIMI_KEY_ONTOLOGY (see .env.example)
+.venv/bin/python experiments/exp1_ontology.py        # ontology vs raw text (200 calls)
+.venv/bin/python experiments/exp2_multiagent.py      # unified vs role agents (openai-agents SDK)
+RUN_ONLY=C .venv/bin/python experiments/exp2_multiagent.py  # typed-handoff arm only
+.venv/bin/python experiments/audit_exp1_verify.py    # response-capture audit
+```
+
+### Deck regeneration
+
+```bash
+node scripts/print_deck.js   # docs/deck/slides.html → docs/SEONDAL_Pay_소개서.pdf (headless Chrome)
 ```
 
 ## Observability
