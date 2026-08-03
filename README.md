@@ -63,6 +63,26 @@ for legacy `X-Payment-*` (x402-style) clients.
 | Pull mode (`payload.type="transaction"`) | ⛔ explicit error (roadmap) |
 | SPL/USDC (`transferChecked` + ATA) | roadmap |
 
+## MCP server (Agent-to-Agent micro-economy)
+
+The platform itself is an **MCP server** — Claude / any MCP client can call
+our engines as tools, and paid tools are gated by the same MPP/Solana
+verification path:
+
+```
+POST /mcp  (JSON-RPC 2.0, streamable-http)
+```
+
+- **Free tools**: `get_market_pie`, `get_comparator_leaderboard`,
+  `get_product_catalog`, `get_wallet_balance`, `get_profiles`,
+  `assess_compliance` (deterministic regulatory guardrail)
+- **Paid tool**: `get_sourcing_analysis` (Tier 3, 0.05 SOL) — call
+  `get_payment_challenge` → pay on Solana devnet with `externalId` as Memo →
+  retry with `paymentSignature`. Server verifies on-chain (amount, recipient,
+  memo binding, TTL, replay) before returning the pipeline result.
+- Client setup: [`docs/MCP_CLIENT_GUIDE.md`](docs/MCP_CLIENT_GUIDE.md) ·
+  E2E test: `scripts/test_mcp_flow.ts`
+
 ## Quickstart
 
 ```bash
