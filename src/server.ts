@@ -57,7 +57,7 @@ import { runLiveSourcingPipeline } from './liveSourcingPipeline';
 import { refreshCategoryBenchmarks, listCategoryBenchmarks } from './coupangBenchmarkEngine';
 import { isCoupangConfigured } from './coupangPartnersClient';
 import { scanSellerProducts, getSellerProduct, COUPANG_VENDOR_ID } from './coupangSellerClient';
-import { addObservation, listObservations } from './coupangObservationStore';
+import { addObservation, listObservations, getTop10Observations } from './coupangObservationStore';
 import { computeMarketPie, computeEntryAnalysis, enrichPortfolioWithMarketEntry } from './marketPieEngine';
 import { createMcpHandler } from './mcpServer';
 import { assessProductCompliance } from './complianceVerdictEngine';
@@ -1212,6 +1212,15 @@ app.post('/api/ingest/coupang-price', (req: Request, res: Response) => {
 
 app.get('/api/ingest/coupang-price', (_req: Request, res: Response) => {
   return res.status(200).json({ count: listObservations().length, observations: listObservations(50) });
+});
+
+/**
+  * Coupang Agent Browsing TOP 10 Observed Items API.
+  */
+app.get('/api/ingest/coupang-top10', (req: Request, res: Response) => {
+  const keyword = req.query.keyword as string | undefined;
+  const items = getTop10Observations(keyword);
+  return res.status(200).json({ count: items.length, top10: items });
 });
 
 /**

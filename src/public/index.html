@@ -565,6 +565,17 @@
               <thead><tr><th>순위</th><th>상품명</th><th>판매가</th><th>월판매량</th><th>점유율</th></tr></thead>
               <tbody id="marketPieBody"></tbody>
             </table>
+        <!-- OpenClaw Top 10 Agent Browsing Card -->
+        <div class="card-box glass">
+          <div class="card-header">
+            <h2>🌐 OpenClaw 에이전트 브라우징 (TOP 10 실측 연동)</h2>
+            <span class="sub-hint">쿠팡 브라우저 DOM 렌더링 수집가</span>
+          </div>
+          <div class="table-wrap" style="max-height: 280px; overflow-y: auto;">
+            <table>
+              <thead><tr><th>#</th><th>상품명</th><th>카테고리</th><th>실측가 (KRW)</th><th>월추정판매</th><th>수집 출처</th></tr></thead>
+              <tbody id="top10ObsBody"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -886,8 +897,28 @@ async function loadAll() {
     renderFullCatalog(fullProds, s.comparator.leaderboard);
     renderChart(s.comparator.leaderboard);
     renderMarginPie(s.comparator.leaderboard);
+    loadTop10Observed();
   } catch (e) { console.error(e); }
   loadOnboarding();
+}
+
+async function loadTop10Observed() {
+  try {
+    const r = await fetch(API + '/api/ingest/coupang-top10');
+    const d = await r.json();
+    const items = d.top10 || [];
+    if (!document.getElementById('top10ObsBody')) return;
+    top10ObsBody.innerHTML = items.map((item, idx) => `
+      <tr>
+        <td><b>${idx + 1}</b></td>
+        <td>${item.productName.slice(0, 24)}...</td>
+        <td><span class="badge-tag" style="font-size:10px">${item.category || '기타'}</span></td>
+        <td style="color:var(--accent-cyan); font-weight:700">₩${item.priceKrw.toLocaleString()}</td>
+        <td>${(item.monthlySales || 0).toLocaleString()}건</td>
+        <td><span class="badge-tag env" style="font-size:9.5px">${item.source}</span></td>
+      </tr>
+    `).join('');
+  } catch (e) { console.error(e); }
 }
 
 function roiBadge(roi) {

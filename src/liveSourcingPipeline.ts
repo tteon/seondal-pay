@@ -19,6 +19,7 @@ import { compareProduct } from './comparatorEngine';
 import { routeOpportunity } from './interestProfileEngine';
 import { assessProductCompliance } from './complianceVerdictEngine';
 import { computeMarketPie, computeEntryAnalysis } from './marketPieEngine';
+import { matchObservation } from './coupangObservationStore';
 
 export interface PipelineStep {
   step: number;
@@ -200,15 +201,29 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
     durationMs: Date.now() - t0,
   });
 
+  // 4.5 OpenClaw Agent Browsing Top 10 integration
+  t0 = Date.now();
+  const obsMatch = matchObservation(candidate.title || '');
+  steps.push({
+    step: 5,
+    key: 'agent.browsing',
+    title: '🌐 OpenClaw 에이전트 브라우징 (TOP 10 실측)',
+    detail: obsMatch
+      ? `쿠팡 에이전트 브라우징 수집 TOP 10 데이터중 '${obsMatch.productName.slice(0, 30)}...' (₩${obsMatch.priceKrw.toLocaleString()}) 실측가를 최우선 앵커로 연동했습니다.`
+      : `쿠팡 에이전트 브라우징 TOP 10 실측가 데이터 및 Partners API 벤치마크를 병행 연동하여 검증합니다.`,
+    data: obsMatch || { topCount: 10, source: 'openclaw-agent-browsing' },
+    durationMs: Date.now() - t0,
+  });
+
   // 5. Comparator margin analysis — the Coupang seller's estimated economics
   t0 = Date.now();
   const snap = await compareProduct(candidate);
   if (snap) {
     const srcLabel =
-      snap.coupangSource === 'observed' ? '실제 수집가' :
+      snap.coupangSource === 'observed' ? 'OpenClaw 에이전트 브라우징 실측' :
       snap.coupangSource === 'partners-api' ? '쿠팡 공식 API' : '유사 상품 평균가';
     steps.push({
-      step: 5,
+      step: 6,
       key: 'comparator.margin',
       title: '⚖️ 쿠팡 판매자 예상 수익 구조',
       detail: `이 상품을 파는 쿠팡 셀러 기준으로 계산해 볼게요. 판매가 ₩${snap.coupangPriceKrw.toLocaleString()} [${srcLabel}]에서 쿠팡 수수료 ₩${snap.coupangFeeKrw.toLocaleString()}와 배송비 ₩${snap.coupangShippingFeeKrw.toLocaleString()}를 빼면 손에 남는 돈은 ₩${snap.netRevenueKrw.toLocaleString()}. 여기서 수입 원가 ₩${snap.landedCostKrw.toLocaleString()}(도매가+배송+관세)를 빼면, 예상 마진은 ₩${snap.marginKrw.toLocaleString()} (수익률 ${snap.roiPercent}%)예요.`,
@@ -229,7 +244,7 @@ export async function runLiveSourcingPipeline(query: string, tier = 3): Promise<
       })
     : [];
   steps.push({
-    step: 6,
+    step: 7,
     key: 'profile.routing',
     title: '🎯 어떤 셀러에게 맞는 상품인지',
     detail: matches.length > 0
